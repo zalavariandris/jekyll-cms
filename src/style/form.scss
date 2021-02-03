@@ -1,0 +1,143 @@
+// Form
+form{
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+
+form>.actions{
+	align-self: flex-end;
+}
+
+
+.field{
+	margin: 2rem 0;
+}
+.field>label{
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	display: inline-block;
+	margin-bottom: 0.5rem;
+}
+
+// ELEMENTS
+.textfield, input[type="text"], input[type="date"],
+.textarea, textarea{
+	border: none;
+	border-bottom: 1px dashed grey;
+	background-color: transparent;
+}
+.textfield:focus, input[type="text"]:focus, input[type="date"]:focus,
+.textarea:focus, textarea:focus{
+	outline: none;
+	border-bottom: 1px solid grey;
+	background-color: white;
+}
+
+.control{
+	display: flex;
+	align-items: baseline;
+	justify-content: stretch;
+}
+button, input[type="submit"]{
+	flex-basis: 0;
+}
+
+.control input,
+.control textarea{
+	width: auto;
+	margin: 0;
+	padding: 0;
+	display: block;
+}
+
+.control textarea{
+	resize: none;
+	line-height: 1.58;
+	overflow: hidden;
+	overflow-wrap: break;
+}
+.textarea, textarea{
+	appearance: none;
+}
+
+.control input[type="file"]{
+	color: transparent;
+	// border: none;
+}
+
+section{
+	// margin-bottom: 3em;
+}
+
+label.file-input+input[type="file"]{
+	display: none;
+}
+
+// modifiers
+button.is-danger{
+	background-color: #f14668;
+	color: white;
+}
+input[type="submit"].is-primary{
+	background-color: #48c774;
+	color: white;
+}
+
+.button, 
+button, 
+input[type="file"],
+input[type="submit"],
+label.file-input{
+	padding: 0.5rem 1rem;
+	border-radius: 3px;
+	background-color: transparent;
+	border: 1px solid  rgb(239, 239, 239);
+	font-weight: inherit;
+	display: inline-block;
+	font-size: small;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+.button.icon{
+	padding: 0;
+	border: none;
+}
+.button.icon:hover{
+	border: none;
+}
+.button.icon:hover>.svg-inline--fa{
+	color: black;
+}
+
+.button:hover, 
+button:hover, 
+input[type="file"]:hover,
+input[type="submit"]:hover,
+label.file-input:hover
+{
+	// background-color: rgb(220, 220, 220);
+	border: 1px solid  rgb(220, 220, 220);
+}
+
+output{
+	color: white;
+	background-color: grey;
+	padding: 0.25rem 0.5rem;
+	font-size: 0.66rem;
+	border-radius: 0.5rem;
+	font-style: italic;
+}
+
+form img{
+	max-height: 5rem;
+}
+
+form{
+	font-size: 14px;
+}
+form input,
+form textarea{
+	font-size: inherit;
+}

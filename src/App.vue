@@ -1,32 +1,122 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
+    <header>
+      <h1>Jekyll</h1>
+      <div>
+        {{repo}}
+        <span class="label">{{branch}}</span>
+      </div>
+
+    </header>
+
+    <navigation></navigation>
+
+    <main>
+      <router-view></router-view> 
+    </main>
+
+    <footer>
+      <small><i>powered by:</i></small>
+      <img src="./assets/logo.png" 
+      style="height:1.3rem; margin-bottom: -0.35em; margin-left: 0.3em;">
+    </footer>
+
+    <vue-progress-bar></vue-progress-bar>
   </div>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+import navigation from './components/navigation'
+export default {
+  name: "App",
+  components: {navigation},
+  data: function(){
+    return {
+      logs: []
+    }
+  },
+  mounted: function(){
+    window.app = this;
+    const jekyll = this.$store.state.jekyll;
+    jekyll.addEventListener("onlog", (msg)=>{
+      this.logs.push(msg )
+      console.log("EVENT LISTEN MSG: ", msg)
+    })
+  },
+  computed: {
+    repo(){
+      return "cms-sandbox"
+    },
 
-#nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
+    branch(){
+      return "master"
     }
   }
+};
+</script>
+
+<style>
+@keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+*{
+  animation: fadeIn ease 0.25s;
+}
+
+.consol{
+    background-color: white;
+    left: 0;
+    bottom: 0;
+    max-height: 10em;
+    overflow: hidden;
+    /* overflow: auto scroll; */
+    /* box-shadow: 2px 2px 10px rgb(0 0 0 / 10%); */
+    max-height: 3em;
+    color: grey;
+    font-style: italic;
+}
+
+.modal{
+  position: fixed;
+  z-index: 9998;
+  background: rgba(255, 255, 255, 0.95);
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#app{
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    'header main'
+    'nav main'
+    'footer main';
+
+  gap: 2rem;
+  min-height: 100vh;
+  padding: 3rem;
+  box-sizing: border-box;
+  margin: auto;
+}
+#app>header{
+  grid-area: header;
+}
+#app>nav{
+  grid-area: nav;
+}
+#app>main{
+  grid-area: main;
+}
+#app>footer{
+  grid-area: footer;
 }
 </style>

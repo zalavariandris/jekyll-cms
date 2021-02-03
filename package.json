@@ -5,11 +5,27 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "test:unit": "vue-cli-service test:unit"
+    "test": "npm run test:posts && npm run test:projects",
+    "test:posts": "vue-cli-service test:unit posts.spec.ts",
+    "test:projects": "vue-cli-service test:unit projects.spec.ts",
+    "test:pages": "vue-cli-service test:unit pages.spec.ts"
   },
   "dependencies": {
+    "@octokit/rest": "^18.0.14",
+    "@octokit/types": "^6.5.0",
+    "gray-matter": "^4.0.2",
+    "jest-canvas-mock": "^2.3.0",
+    "jsonschema": "^1.4.0",
+    "moment": "^2.29.1",
+    "parse-path": "^4.0.3",
+    "slugify": "^1.4.6",
+    "url-join": "^4.0.1",
     "vue": "^2.6.11",
+    "vue-progressbar": "^0.7.5",
     "vue-router": "^3.2.0",
+    "vue-simplemde": "^2.0.0",
+    "vue-textarea-autosize": "^1.1.1",
+    "vuedraggable": "^2.24.3",
     "vuex": "^3.4.0"
   },
   "devDependencies": {
@@ -20,6 +36,7 @@
     "@vue/cli-plugin-vuex": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/test-utils": "^1.0.3",
+    "axios": "^0.21.1",
     "node-sass": "^4.12.0",
     "sass-loader": "^8.0.2",
     "typescript": "~3.9.3",

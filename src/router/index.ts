@@ -1,23 +1,30 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 import Home from '../views/Home.vue'
+import ListProjects from '../views/ListProjects.vue'
+import NewProject from '../views/NewProject.vue'
+import EditProject from '../views/EditProject.vue'
+
+import ListPosts from '../views/ListPosts.vue'
+import NewPost from '../views/NewPost.vue'
+import EditPost from '../views/EditPost.vue'
+
+import ListPages from '../views/ListPages.vue'
+import EditPage from "../views/EditPage.vue"
 
 Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
+  { path: '/projects', name: "listProjects", component: ListProjects },
+  { path: '/projects/new', name: 'newProject', component: NewProject },
+  { path: '/projects/:id/edit', name: 'editProject', component: EditProject },
+
+  { path: '/posts', name: "listPosts", component: ListPosts },
+  { path: '/posts/new', name: 'newPost', component: NewPost },
+  { path: '/posts/:id/edit', name: 'editPost', component: EditPost },
+
+  { path: "/pages", name: 'listPages', component: ListPages},
+  { path: "/pages/:id/edit", name: 'editPage', component: EditPage}
 ]
 
 const router = new VueRouter({
