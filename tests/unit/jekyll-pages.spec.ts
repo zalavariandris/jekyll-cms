@@ -15,7 +15,7 @@ axios.defaults.headers.common['If-None-Match'] = '' //prevent cache
 
 const jekyll = new Jekyll({
     owner: "zalavariandris",
-    repo: "cms-sandbox",
+    repo: "juditfischer-jekyllcms",
     branch: "master",
     token
 })
@@ -51,6 +51,7 @@ test("fetch page", async()=>{
 
 test("update existing page content", async()=>{
     const page = await jekyll.fetchPage("random-testpage.md")
+    
     const content = "the random content of the test page - "+makeID()
     const new_page = {
         title: page.title,
@@ -69,4 +70,4 @@ test("update existing page content", async()=>{
     const result = matter(b64DecodeUnicode(get_response.data.content))
 
     expect(result.content.trim()).toBe(content.trim())
-})
+}, 15000)

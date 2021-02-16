@@ -18,15 +18,22 @@
                 </div>
             </div>
 
-            <div class="field" style="border: 0.5px solid grey; padding: 1em; border-radius: 0.3em;">
+            <div class="year">
+                <label>title</label>
+                <div class="control">
+                    <input v-model="year" type="number" placeholder="year">
+                </div>
+            </div>
+
+            <div class="fieldset">
                 <label>gallery</label>
-                <draggable class="gallery" tag="div" v-model="gallery" >
+                <draggable class="grid" tag="div" v-model="gallery" >
                     <div class="card" v-for="fig in gallery" :key="fig.image.title">
                         <div class="card-media">
                             <img :src="imageUrl(fig.image)" :title= "fig.image.title"/>
                         </div>
                         <div class="card-text">
-                            <textarea-autosize rows="1" v-model="fig.caption" placeholder="caption"/>
+                            <textarea-autosize rows="1" v-model="fig.caption" placeholder="{caption}"/>
                         </div>
                         <div class="card-buttons">
                             <button type="button" class="button icon" v-on:click="removeFigure(fig)">
@@ -36,16 +43,18 @@
                     </div>
                 </draggable>
 
-                <div class="control">
-                    <label class="file-input" for="gallery">+ add image</label>
-                    <input 
-                        name="gallery" 
-                        id="gallery" 
-                        type="file" 
-                        accept="image/png image/jpg" 
-                        v-on:change="onFilesChange"
-                        multiple="" 
-                    />
+                <div class="field">
+                    <div class="control">
+                        <label class="file-input" for="gallery">+ add image</label>
+                        <input 
+                            name="gallery" 
+                            id="gallery" 
+                            type="file" 
+                            accept="image/png image/jpg" 
+                            v-on:change="onFilesChange"
+                            multiple="" 
+                        />
+                    </div>
                 </div>
             </div>
         </section>
@@ -63,33 +72,7 @@
 
 <style scoped lang="scss">
 @import"../style/form.scss";
-header{
-    display: flex;
-    justify-content: space-between;
-    padding: 1rem;
-}
-.gallery{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1em;
-}
-.gallery .card{
-    padding: 1rem;
-    width: 8rem;
-}
-.gallery .card img{
-    width: 100%;
-    object-fit: contain;
-}
-.card{
-    position: relative;
-    // border: 0.5px solid grey;
-}
-.card .card-buttons{
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-}
+@import "../style/card.scss";
 </style>
 
 <script lang="js">
@@ -103,6 +86,7 @@ export default {
         return {
             title: "",
             content: "",
+            year: 2000,
             gallery: []
         } 
     },
@@ -130,6 +114,7 @@ export default {
             jekyll.fetchProject(filename)
             .then((project)=>{
                 this.title = project.title;
+                this.year = project.year;
                 this.content = project.content;
                 this.gallery = project.gallery;
                 this.$Progress.finish()
@@ -167,6 +152,7 @@ export default {
                 this.$route.params.id,
             {
                 title: this.title,
+                year: parseInt(this.year),
                 content: this.content,
                 gallery: JSON.parse(JSON.stringify(this.gallery))
             })
@@ -215,7 +201,7 @@ export default {
                             this.gallery.push({
                                 image: {
                                     url: dataURL,
-                                    title: file.name,
+                                    title: file.name.startsWith("_") ? file.name.slice(1) : file.name,
                                     alt: ""
                                 },
                                 caption: ""

@@ -18,7 +18,7 @@ axios.defaults.headers.common['Authorization'] = `zalavariandris ${token}`;
 
 const jekyll = new Jekyll({
     owner: "zalavariandris",
-    repo: "cms-sandbox",
+    repo: "juditfischer-jekyllcms",
     branch: "master",
     token
 })
@@ -56,16 +56,16 @@ test("list posts from GitHub", async ()=>{
 })
 
 test("fetch post from github", async()=>{
-    const post_id = "2019-01-15-masa.md"
+    const post_id = "2021-02-02-beautiful-is-beautiful-opening-at-kisterem-gallery.md"
     const post = await jekyll.fetchPost(post_id)
 
-
-    expect(post.title).toBe("Masa")
-    expect(post.date).toBe("2019-01-15")
-    expect(post.content.trim()).toBe("Az első fotó Másáról.".trim())
+    expect(post.id).toBe(post_id)
+    expect(post.title).toBe("Beautiful is Beautiful opening at Kisterem Gallery")
+    expect(post.date).toBe("2021-02-02")
+    expect(post.content.trim()).toBe("".trim())
     expect(post.image).toStrictEqual({
-        url: "media/masa 0115.jpg",
-        title: "masa 0115.jpg",
+        url: "media/Ami szep plakat.jpg",
+        title: "Ami szep plakat.jpg",
         alt: ""
     })
 })
@@ -113,7 +113,7 @@ test("save and delete new post with no images sucessfully", async()=>{
     
     await expect(axios(url))
     .rejects.toThrow("Request failed with status code 404")
-}, 10000)
+}, 15000)
 
 test("save and delete new post with images succesfully", async()=>{
     // 1) Create Post
@@ -144,3 +144,45 @@ test("save post with empty title throws error", async()=>{
     return expect(jekyll.saveNewPost({title: "", date: moment().format("YYYY-MM-DD"), content: "has content"}))
     .rejects.toThrow("Invalid Post")
 })
+
+test("rename project on github", async()=>{
+    // SETUP
+    const old_filename = await jekyll.saveNewPost({
+        title: "TEST Rename",
+        date: "2000-03-04",
+        content: ""
+    })
+
+    // rename project
+    const new_filename = await jekyll.savePost(old_filename, {
+        title: "TEST Rename (RENAMED)",
+        date: "2000-03-04",
+        content: ""
+    })
+
+    expect(old_filename).not.toBe(new_filename)
+
+    // expect old filename to reject and not found
+    await expect( jekyll.octokit.repos.getContent({
+        owner: jekyll.owner,
+        repo: jekyll.repo,
+        ref: jekyll.branch,
+        path: `_posts/${old_filename}`,
+        headers: {'If-None-Match': ''} //prevent cache
+    })).rejects.toThrow("Not Found")
+
+    // expect to found the new filename
+    const response = await jekyll.octokit.repos.getContent({
+        owner: jekyll.owner,
+        repo: jekyll.repo,
+        ref: jekyll.branch,
+        path: `_posts/${new_filename}`,
+        headers: {'If-None-Match': ''} //prevent cache
+    })
+
+    expect(response.data.name).toBe(new_filename)
+
+    // TEAR DOWN
+    await jekyll.deletePost(new_filename)
+
+}, 15000)

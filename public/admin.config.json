@@ -1,0 +1,8 @@
+{
+    "host": {
+        "type": "ghpages",
+        "owner": "zalavariandris",
+        "repo": "juditfischer-jekyllcms",
+        "branch": "master"
+    }
+}

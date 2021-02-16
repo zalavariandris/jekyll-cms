@@ -12,6 +12,12 @@
         <router-link :to="{name: 'listPages'}">Pages</router-link>
       </li>
     </ul>
+    <h3>Advanced</h3>
+    <ul>
+      <li>
+        <router-link :to="{name: 'dashboard'}">Dashboard</router-link>
+      </li>
+    </ul>
   </nav>
 </template>
 

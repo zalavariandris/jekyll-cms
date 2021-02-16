@@ -19,7 +19,7 @@
 
             <div class="field" style="border: 0.5px solid grey; padding: 1em; border-radius: 0.3em;">
                 <label>gallery</label>
-                <draggable class="gallery" tag="div" v-model="gallery" >
+                <draggable class="grid" tag="div" v-model="gallery" >
                     <div class="card" v-for="fig in gallery" :key="fig.image.title">
                         <div class="card-media">
                             <img :src="imageUrl(fig.image)" :title= "fig.image.title"/>
@@ -62,33 +62,7 @@
 
 <style scoped lang="scss">
 @import"../style/form.scss";
-header{
-    display: flex;
-    justify-content: space-between;
-    padding: 1rem;
-}
-.gallery{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1em;
-}
-.gallery .card{
-    padding: 1rem;
-    width: 8rem;
-}
-.gallery .card img{
-    width: 100%;
-    object-fit: contain;
-}
-.card{
-    position: relative;
-    // border: 0.5px solid grey;
-}
-.card .card-buttons{
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-}
+@import "../style/card.scss";
 </style>
 
 <script lang="js">
@@ -160,7 +134,7 @@ export default {
                             this.gallery.push({
                                 image: {
                                     url: dataURL,
-                                    title: file.name,
+                                    title: file.name.startsWith("_") ? file.name.slice(1) : file.name,
                                     alt: ""
                                 },
                                 caption: ""

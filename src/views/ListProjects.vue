@@ -11,41 +11,43 @@
 		<ul>
 			<li v-for="project in projects" :key="project.id">
 				<router-link :to="{name: 'editProject', params: {id: project.id}}">
-					{{project.title}}
+					{{project.title}}<br/>
+					<small>{{project.year}}</small>
 				</router-link>
 			</li>
 		</ul>
 	</div>
 </template>
 
-<style scoped>
-	header{
-		display: flex;
-		justify-content: space-between;
-		padding: 1rem;
-	}
+<style scoped lang="scss">
+@import "../style/form.scss";
+header{
+	display: flex;
+	justify-content: space-between;
+	padding: 1rem;
+}
 
-	li{
-		padding: 0;
-	}
+li{
+	padding: 0;
+}
 
-	li a{
-		padding: 1rem 1rem;
-		display: block;
-	}
+li a{
+	padding: 1rem 1rem;
+	display: block;
+}
 
-	li a small{
-		color: grey;
-		font-style: italic;
-	}
+li a small{
+	color: grey;
+	font-style: italic;
+}
 
-	li a:hover{
-		/* background-color: rgb(245,245,245); */
-		/* text-decoration: none; */
-	}
-	li:not(:last-of-type){
-		border-bottom: 1px solid lightgrey;
-	}
+li a:hover{
+	/* background-color: rgb(245,245,245); */
+	/* text-decoration: none; */
+}
+li:not(:last-of-type){
+	border-bottom: 1px solid lightgrey;
+}
 </style>
 
 <script lang="js">

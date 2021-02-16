@@ -6,7 +6,8 @@
         <ul>
             <li class="fadeEnter" v-for="page in pages" :key="page.id">
                 <router-link :to="{name: 'editPage', params: {id: page.id}}">
-                    {{page.title}}
+                    {{page.title}}</br>
+					<small>{{page.id}}</small>
                 </router-link>
             </li>
         </ul>

@@ -1,4 +1,9 @@
-# jekyll-cms2
+# jekyll-cms
+
+## TODO
+- [ ] admin.config.js
+- [ ] image name like _MG_0012.jpg wont work with jekyll. renamea it when uploading.
+- [ ] indicate page built, or being built
 
 ## Project setup
 ```

@@ -10,8 +10,9 @@ import {validate} from 'jsonschema'
 import {toTitleCase} from '@/utils'
 
 
-import moment from 'moment'
-var pathParse = require('path-parse');
+import moment, { relativeTimeThreshold } from 'moment'
+import pathParse from 'path-parse'
+
 
 /* utilities */
 function b64DecodeUnicode(str) {
@@ -64,6 +65,7 @@ const project_schema = {
     properties: {
         id: {type: 'string', minLength: 1},
         title: {type: "string", minLength: 1},
+        year: {type: "number"},
         content: {type: "string"},
         gallery: {
             type: "array",
@@ -89,7 +91,7 @@ const post_schema = {
 const page_schema = {
     type: "object",
     properties: {
-        id: {type: "string", minLength: 1},
+        id: {type: "string", minLength: 0},
         title: {type: 'string', minLength: 1},
         content: {type: 'string'}
     },
@@ -111,6 +113,7 @@ interface IFigure{
 interface IProject{
     id?: string;
     title: string;
+    year?: number;
     content: string;
     gallery?: Array<IFigure>;
 }
@@ -132,30 +135,44 @@ interface IPage{
 
 /* JEKYLL */
 class Jekyll{
-    owner: string;
-    repo: string;
-    branch: string;
-    token: string;
+    owner?: string;
+    repo?: string;
+    branch?: string;
     octokit: any;
     stage: object = {};
     listeners: object = {};
     
-
-    constructor({owner, repo, branch, token}: {owner: string, repo: string, branch: string, token: string}){
-        this.owner = owner;
-        this.repo = repo;
-        this.branch = branch;
-        this.token = token
-        this.octokit = new Octokit({
-            auth: token,
-        });
-
+    constructor(config?:{owner:string, repo:string, branch:string, token:string}){
+        this.octokit = new Octokit();
         this.listeners['onlog'] = []
+
+        if(config){
+            this.configure(config)
+        }
+    }
+
+    configure(config: {owner:string, repo:string, branch:string, token:string}){
+        this.owner = config.owner;
+        this.repo = config.repo;
+        this.branch = config.branch;
+        this.token = config.token;
+
+        this.octokit = new Octokit({
+            auth: config.token,
+        }); 
     }
 
     /* HELPERS */
     slugify(text: string): string{
         return slugify(text).toLowerCase()
+    }
+
+    get token(){
+        return localStorage['accessToken'];
+    }
+
+    set token(value){
+        localStorage['accessToken'] = value;
     }
 
     log(msg:string){
@@ -198,41 +215,39 @@ class Jekyll{
         return urljoin(`https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/`, path);
     }
 
-    async loadTree(){
+    async _pull_tree():Promise<Array<{path:string, sha:string, type:"blob", mode: "100644"}>>{
+        const octokit = this.octokit;
+        const {data: branch} = await octokit.repos.getBranch({
+            owner: this.owner,
+            repo: this.repo,
+            branch: this.branch
+        })
 
+        const {data: tree} = await octokit.git.getTree({
+            owner: this.owner,
+            repo: this.repo,
+            tree_sha: branch.commit.sha,
+            recursive: true
+        })
+
+        return tree.tree
+        .filter(item=>item.type==="blob")
+        .map(function(blob){
+            return {
+                path: blob.path,
+                sha: blob.sha,
+                type: blob.type, /* blob */
+                mode: blob.mode /* "100644" */
+            };
+        })
     }
 
-    async save(){
-        const stage = {...this.stage};
-        // UPDATE TREE
-        // create git blobs
-        this.log("saving...")
+    async _push_tree(git_tree: Array<{path:string, sha:string, type:"blob", mode: "100644"}>){
+        const octokit = this.octokit;
         const owner = this.owner;
         const repo = this.repo
         const branch = this.branch
-        const octokit = this.octokit;
-
-        const git_tree: Array<any> = []
-        for(let path in stage){
-            const file = stage[path]
-            this.log("  - "+path)
-            if(file.content){
-                let {data: git_blob} = await this.octokit.git.createBlob({
-                    owner,
-                    repo,
-                    content: file.content,
-                    encoding: 'base64'
-                })
-                git_tree.push({
-                    path: path,
-                    sha: git_blob.sha,
-                    mode: "100644",
-                    type: "blob"
-                })
-            }
-        }
-
-        // Update Git Tree
+        
         this.log("creating git tree...")
         const {data: {commit: last_commit}} = await octokit.repos.getBranch({
             owner,
@@ -240,32 +255,36 @@ class Jekyll{
             branch
         })
   
-        const {data: tree} = await octokit.git.createTree({
+        const tree = await octokit.git.createTree({
             owner,
             repo,
-            tree: git_tree,
-            base_tree: last_commit.sha
+            tree: git_tree.map(function(blob){
+                return {
+                    path: blob.path,
+                    sha: blob.sha,
+                    mode: blob.mode,
+                    type: blob.type
+                }
+            }),
+            // base_tree: last_commit.sha
         })
-  
+        
         // Create Commit
         this.log("creating commit...")
         const {data: new_commit} = await octokit.git.createCommit({
             owner,
             repo,
             message: "create new project",
-            tree: tree.sha,
+            tree: tree.data.sha,
             parents: [last_commit.sha]
         })
 
-        const the_update = await octokit.git.updateRef({
+        await octokit.git.updateRef({
             owner,
             repo,
             ref: "heads/"+this.branch,
             sha: new_commit.sha
         });
-
-        this.stage = {}
-        this.log("saved!")
     }
 
     /* JEKYLL-CMS */
@@ -316,33 +335,51 @@ class Jekyll{
         return tree.data.tree
         .filter(file=>the_filter(file.path))
         .map(function(file){
+            const {dir, name} = pathParse(file.path)
+            const title = dir==="" ? name : urljoin(dir, name == "index" ? "" : "index")
+            
             return {
                 id: file.path,
-                title: pathParse(file.path).name
+                title
             }
         })
     }
 
-    async listPosts(): Promise<Array<{id: string, title: string, date: string}>>{
+    async listPosts(): Promise<Array<IPost>>{
         const items = await this.listItems("posts")
-
-        return items.map(function(item){
-            let {name} = pathParse(item.id);
-            const date = name.slice(0,10)
-            const title =  toTitleCase(name.slice(11).replace(/[-_]/g, " "))
-            return {
-                id: item.id, 
-                title,
-                date
+        
+        const posts:Array<IPost> = await Promise.all( items.map(item=>this.fetchPost(item.id)) )
+        return posts.sort( function(a, b){
+            if(a.date && b.date){
+                return new Date(a.date).getTime()-new Date(b.date).getTime()
+            }else{
+                if(a.date){
+                    return -1;
+                }
+                if(b.date){
+                    return +1;
+                }
             }
+            return 0;
         })
+
+        // return items.map(function(item){
+        //     let {name} = pathParse(item.id);
+        //     const date = name.slice(0,10)
+        //     const title =  toTitleCase(name.slice(11).replace(/[-_]/g, " "))
+        //     return {
+        //         id: item.id, 
+        //         title,
+        //         date
+        //     }
+        // })
     }
 
-    async listProjects(): Promise<Array<{id:string, title:string}>>{
+    async listProjects(): Promise<Array<unknown>>{
         this.log("listing projects...")
         const octokit = this.octokit;
 
-        let {data: projects} = await octokit.repos.getContent({
+        let {data: project_tree} = await octokit.repos.getContent({
            owner:this.owner,
            repo: this.repo,
            ref: this.branch,
@@ -350,12 +387,28 @@ class Jekyll{
            headers: {'If-None-Match': ''} //prevent cache
         })
 
-        return projects.map(function(blob){
-            return {
-                id: blob.name,
-                title: toTitleCase(pathParse(blob.name).name.replace(/[-_]/g, " "))
+        // fetch all projects and sort by year
+        const projects:Array<IProject> = await Promise.all( project_tree.map( blob=> this.fetchProject(blob.name) ) )
+        return projects.sort( function(a:any, b:any){
+            if(a.year && b.year){
+                return b.year-a.year;
+            }else{
+                if(a.year){
+                    return -1;
+                }
+                if(b.year){
+                    return +1;
+                }
             }
-        })
+            return 0;
+        });
+
+        // return project_tree.map(function(blob){
+        //     return {
+        //         id: blob.name,
+        //         title: toTitleCase(pathParse(blob.name).name.replace(/[-_]/g, " "))
+        //     }
+        // })
 
     }
 
@@ -449,6 +502,7 @@ class Jekyll{
         const project: IProject = {
             id: project_id,
             title: yaml.data.title,
+            year: yaml.data.year,
             content: yaml.content,
             gallery: yaml.data.gallery
         }
@@ -472,11 +526,13 @@ class Jekyll{
         return this.saveProject(project_id, project, media_folder)
     }
 
-    async savePost(post_id: string, post: IPost, media_folder: string): Promise<string>{
+    async savePost(post_id: string, post: IPost, media_folder: string="media"): Promise<string>{
         const validator = validate(post, post_schema)
         if(!validator.valid){
             throw TypeError("Invalid Post")
         }
+
+        const tree = await this._pull_tree()
         
         // ADD POST TO STAGE
         // Create Image Attachment
@@ -488,13 +544,34 @@ class Jekyll{
             if(mediatype.split("/")[0]!="image"){
                 throw TypeError("this is not an image")
             }
-            this.stage[filepath] = {
-                content: data
+
+            // remove file at path if exists
+            const idx = tree.findIndex(blob=>blob.path===filepath)
+            if(idx>=0){
+                console.error(`file ${filepath} exists!`)
+                tree.splice(idx, 1)
             }
+
+            // create image blob
+            const {data: img_blob} = await this.octokit.git.createBlob({
+                owner: this.owner,
+                repo: this.repo,
+                content: data,
+                encoding: "base64"
+            })
+
+            // add image to tree
+            tree.push({
+                path: filepath,
+                sha: img_blob.sha,
+                mode: "100644",
+                type: "blob"
+            })
         }
 
         // Serialize Post to Markdown
-        const filename = moment(post.date).format("YYYY-MM-DD")+"-"+this.slugify(post.title)+".md"
+        const filename = post.id || moment(post.date).format("YYYY-MM-DD")+"-"+this.slugify(post.title)+".md"
+        const filepath = urljoin("_posts", filename)
 
         const content:string = post.content;
 
@@ -511,18 +588,34 @@ class Jekyll{
             frontmatter.image = post.image
         }
 
-        const md = matter.stringify(content, frontmatter)
+        const md_text = matter.stringify(content, frontmatter)
 
-        this.stage[urljoin("_posts", filename)]={
-            content: b64EncodeUnicode(md)
+        const idx = tree.findIndex(blob=>blob.path === "_posts/"+post_id)
+        if(idx>=0){
+            console.log(`rename '${post_id}' to '${filename}'`)
+            tree.splice(idx, 1)
         }
 
+        const {data: md_blob} = await this.octokit.git.createBlob({
+            owner: this.owner,
+            repo: this.repo,
+            content: b64EncodeUnicode(md_text),
+            encoding: "base64"
+        })
+
+        tree.push({
+            path: filepath,
+            sha: md_blob.sha,
+            type: "blob",
+            mode: "100644"
+        })
+
         // PUSH PROJECT AND ATTACHMENTS to GITHUB
-        await this.save()
+        await this._push_tree(tree)
 
         // LOG SUCCESS
         this.log(`post ${filename} succesfully uploaded to github`)
-        return post_id;
+        return filename;
     }
 
     async saveProject(project_id: string, project: IProject, media_folder:string="media"): Promise<string>{
@@ -530,9 +623,12 @@ class Jekyll{
         if(!validator.valid){
             throw TypeError("Invalid Project"+"\n"+validator.errors.map(err=>"- "+err.stack+"\n"))
         }
+
+        // Pull Git Tree
+        const tree = await this._pull_tree()
         
         // ADD PROJECT TO STAGE
-        // create image attachments
+        // Create Image Attachments
         for(let fig of (project.gallery || [])){
             if(!fig.image.url.startsWith("data:")){
                 continue;
@@ -544,38 +640,84 @@ class Jekyll{
             if(mediatype.split("/")[0]!="image"){
                 throw TypeError("This is not an image")
             }
-            this.stage[filepath] = {
-                content: data
+
+            // remove file at path if exists
+            const idx = tree.findIndex((blob)=>blob.path===filepath)
+            if(idx>=0){
+                console.error(`file ${filepath} exists!`)
+                tree.splice(idx, 1)
             }
+
+            // create image blob
+            const {data: img_blob} = await this.octokit.git.createBlob({
+                owner: this.owner,
+                repo: this.repo,
+                content: data,
+                encoding: "base64"
+            })
+
+            // push file to tree
+            tree.push({
+                path: filepath,
+                sha: img_blob.sha,
+                mode: "100644",
+                type: "blob"
+            })
         }
 
-        // create project markdown
-        const filename = this.slugify(project.title)+".md"
+        // Create Project Markdown
+        // - filename
+        const filename = project.id || (this.slugify(project.title)+".md")
         const filepath = urljoin("_projects", filename)
 
+        // - content
         const content:string = project.content;
 
-        // Replace dataurl with filepath
+        // - frontmatter
         for(let fig of project.gallery || []){
+            // Replace dataurl with filepath
             if(fig.image.url.startsWith("data:")){
                 fig.image.url = urljoin(media_folder, fig.image.title)
             }
         }
 
-        const frontmatter: {title: string, gallery?: Array<IFigure>} = {
+        const frontmatter: {title: string, year?:number, gallery?: Array<IFigure>} = {
             title: project.title,
             gallery: project.gallery
         }
 
-        const markdown_text = matter.stringify(content, frontmatter)
-
-        this.stage[filepath] = {
-            path: filepath,
-            content: b64EncodeUnicode(markdown_text),
+        if(project.year){
+            frontmatter.year = project.year;
         }
 
+        // - markdown
+        const md_text = matter.stringify(content, frontmatter)
+
+        // Add to Git Tree
+        // remove old file if exist
+        const idx = tree.findIndex(blob=>blob.path==="_projects/"+project_id)
+        if(idx>=0){
+            console.log(`rename '${project_id}' to '${filename}'`)
+            tree.splice(idx, 1);
+        }
+
+        // add new content to tree
+        const {data: md_blob} = await this.octokit.git.createBlob({
+            owner: this.owner,
+            repo: this.repo,
+            content: b64EncodeUnicode(md_text),
+            encoding: "base64"
+        })
+        
+        tree.push({
+            path: filepath,
+            sha: md_blob.sha,
+            type: "blob",
+            mode: "100644"
+        })
+
         // PUSH PROJECT AND ATTACHMENTS to GITHUB
-        await this.save()
+        await this._push_tree(tree)
 
         // LOG SUCCESS
         this.log(`project ${filename} succesfully uploaded to github`)
@@ -588,20 +730,37 @@ class Jekyll{
             throw TypeError("Invalid Page"+"\n"+validator.errors.map(err=>"- "+err.stack+"\n"))
         }
 
-        //
+        // Pull Git Tree
+        const tree = await this._pull_tree()
+
+        // Create Page Markdown
         const filepath = page_id;
-        const content = page.content
+
+        const content = page.content;
+
         const frontmatter: {title:string, exclude:boolean} = {
             title: page.title,
             exclude: page.exclude
         }
-        const markdown_text = matter.stringify(content, frontmatter)
-        this.stage[filepath] = {
-            content: b64EncodeUnicode(markdown_text)
-        }
+        const md_text = matter.stringify(content, frontmatter)
+
+        // Add to Git Tree
+        const {data: md_blob} = await this.octokit.git.createBlob({
+            owner: this.owner,
+            repo: this.repo,
+            content: b64EncodeUnicode(md_text),
+            encoding: "base64"
+        })
+        
+        tree.push({
+            path: filepath,
+            sha: md_blob.sha,
+            type: "blob",
+            mode: "100644"
+        })
 
         // PUSH PAGE to GitHub
-        await this.save()
+        await this._push_tree(tree)
         
         // LOG SUCCESS
         this.log(`page ${page_id} succesfully uploaded to github`)
@@ -661,7 +820,11 @@ class Jekyll{
             sha: response.data.sha,
         });
 
-        this.log(`project deleted: ${project_id}`)
+        // this.log(`project deleted: ${project_id}`)
+    }
+
+    preview(markdown:string):string{
+        return "<html></html>"
     }
 }
 

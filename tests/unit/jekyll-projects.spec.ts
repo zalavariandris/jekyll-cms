@@ -1,24 +1,28 @@
 import Jekyll from "@/jekyll"
+import {b64EncodeUnicode, b64DecodeUnicode} from '@/jekyll'
+import {project_schema} from '@/jekyll'
+
 import {randomImage, makeID} from '@/utils'
 
 import matter from 'gray-matter'
-import token from '../token'
+
 import axios from 'axios'
 import {validate} from 'jsonschema'
 import urljoin from 'url-join'
 import 'jest-canvas-mock'
 
-console.log = jest.fn();
-
+// console.log = jest.fn();
+import token from '../token'
+console.log("token:", token)
 const jekyll = new Jekyll({
     owner: "zalavariandris",
-    repo: "cms-sandbox",
+    repo: "juditfischer-jekyllcms",
     branch: "master",
     token
 })
 
-
 axios.defaults.headers.common['Authorization'] = `zalavariandris ${token}`;
+axios.defaults.headers.common['If-None-Match'] = ''
 
 test("list projects from github", async()=>{
     const projects = await jekyll.listProjects()
@@ -40,32 +44,14 @@ test("list projects from github", async()=>{
 })
 
 test("fetch project from github", async()=>{
-    const project_id = "almodni_alszom.md"
+    const project_id = "faux-fauves.md"
     const project = await jekyll.fetchProject(project_id)
 
-    expect(project).toStrictEqual({
-        id: "almodni_alszom.md",
-        title: "Álmodni alszom",
-        content: "",
-        gallery: [
-            {
-                image: {
-                    alt: "",
-                    title: "IMG_7142_1.jpg",
-                    url: "/_uploads/IMG_7142_1.jpg"
-                },
-                caption: null
-            },
-            {
-                image: {
-                    alt: "",
-                    title: "IMG_7305.jpg",
-                    url: "/_uploads/IMG_7305.jpg"
-                },
-                caption: null
-            }
-        ]
-    })
+    expect(project.id).toBe(project_id)
+    expect(project.title).toBe("Faux Fauves")
+    expect(project.year).toBe(2016)
+    
+    expect( validate(project.gallery, project_schema.properties.gallery).valid ).toBeTruthy()
 })
 
 test.skip("save new project with no images", async()=>{
@@ -109,7 +95,7 @@ test("save and delete new project with no images sucessfully", async()=>{
     
     await expect(axios(url))
     .rejects.toThrow("Request failed with status code 404")
-}, 10000)
+}, 15000)
 
 test("save and delete new project with images succesfully", async()=>{
     // 1) Create Project
@@ -142,3 +128,44 @@ test("save project with empty title throws error", async()=>{
     return expect(jekyll.saveNewProject({title: "", content: "has content", gallery: []}))
     .rejects.toThrow("Invalid Project")
 })
+
+test("rename project on github", async()=>{
+    // SETUP
+    const old_filename = await jekyll.saveNewProject({
+        title: "TEST Rename",
+        gallery: [],
+        content: ""
+    })
+
+    // rename project
+    const new_filename = await jekyll.saveProject(old_filename, {
+        title: "Test rename (RENAMED)",
+        gallery: [],
+        content: ""
+    })
+
+    expect(old_filename).not.toBe(new_filename)
+
+    // expect old filename to reject and not found
+    await expect( jekyll.octokit.repos.getContent({
+        owner: jekyll.owner,
+        repo: jekyll.repo,
+        ref: jekyll.branch,
+        path: `_projects/${old_filename}`,
+        headers: {'If-None-Match': ''} //prevent cache
+    })).rejects.toThrow("Not Found")
+
+    // expect to found the new filename
+    const response = await jekyll.octokit.repos.getContent({
+        owner: jekyll.owner,
+        repo: jekyll.repo,
+        ref: jekyll.branch,
+        path: `_projects/${new_filename}`,
+        headers: {'If-None-Match': ''} //prevent cache
+    })
+
+    expect(response.data.name).toBe(new_filename)
+
+    // TEAR DOWN
+    await jekyll.deleteProject(new_filename)
+}, 15000)

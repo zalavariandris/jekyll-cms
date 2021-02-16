@@ -23,24 +23,30 @@
 				</div>
 			</div>
 
-			<div class="field" style="border: 0.5px solid grey; padding: 1em; border-radius: 0.3em;">
-				<label>image</label>
-                <div v-if="image" class="control">
-                    <img :src="imageUrl(image)" :title= "image.title"/>
-                    <button type="button" @click="setImage(null)">
-                        <i class="trash"></i>
-                    </button>
+            <div class="fieldset">
+                <label>image</label>
+                <div class="card">
+                    <div class="card-media">
+                        <div v-if="image" class="control">
+                            <img :src="imageUrl(image)" :title= "image.title"/>
+                        </div>
+                        <div v-else class="control">
+                            <label class="file-input" for="gallery">+ set image</label>
+                            <input 
+                                name="gallery" 
+                                id="gallery" 
+                                type="file" 
+                                accept="image/png image/jpg" 
+                                v-on:change="onFileChange"
+                            />
+                        </div>
+                    </div>
+                    <div class="card-buttons">
+                        <button v-if="image" type="button" class="button icon" @click="setImage(null)">
+                            <i class="trash"></i>
+                        </button>
+                    </div>
                 </div>
-				<div v-else class="control">
-                    <label class="file-input" for="gallery">+ set image</label>
-					<input 
-						name="gallery" 
-						id="gallery" 
-						type="file" 
-						accept="image/png image/jpg" 
-						v-on:change="onFileChange"
-					/>
-				</div>
 			</div>
         </section>
         <section>
@@ -55,11 +61,8 @@
 </template>
 
 <style scoped lang="scss">
-@import"../style/form.scss";
-header{
-    display: flex;
-    justify-content: space-between;
-}
+    @import "../style/form.scss";
+    @import "../style/card.scss";
 </style>
 
 <script lang="js">
