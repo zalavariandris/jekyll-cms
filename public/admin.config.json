@@ -2,7 +2,7 @@
     "host": {
         "type": "ghpages",
         "owner": "zalavariandris",
-        "repo": "juditfischer-jekyllcms",
+        "repo": "zalavaridesign_jekyll",
         "branch": "master"
     }
 }

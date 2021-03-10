@@ -60,11 +60,6 @@
 	</form>
 </template>
 
-<style scoped lang="scss">
-    @import "../style/form.scss";
-    @import "../style/card.scss";
-</style>
-
 <script lang="js">
 import moment from 'moment'
 import {resizeImage} from '../utils'

@@ -1,83 +1,78 @@
 <template>
-    <form @submit.prevent="create" class="editor">	
-        <header>
-            <h2>New Project</h2>
+    <v-form @submit.prevent="save">
+        <v-container v-if="page">
+            <v-toolbar flat>
+                <v-toolbar-title>New Project</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn
+                    color="primary"
+                    outlined
+                    @click="save"
+                >
+                    <v-icon left>
+                        mdi-content-save
+                    </v-icon>
+                    save
+                </v-btn>
+            </v-toolbar>
 
-            <div class="actions">
-                <input class="is-primary" type="submit" value="create">
-            </div>
-        </header>	
+            <v-text-field
+                v-model="page.title"
+                label="title"
+            ></v-text-field>
 
-        <section>	
-            <div class="field">
-                <label>title</label>
-                <div class="control">
-                    <input v-model="title" type="text" placeholder="title">
-                    <output class="label">{{filename}}</output>
-                </div>
-            </div>
+            <v-container>
+                <v-row>
+                    <v-file-input
+                        multiple
+                        hide-input
+                        label="image"
+                    ></v-file-input>
+                </v-row>
+                <v-row>
+                    <draggable v-model="page.gallery" style="display: flex; gap: 1rem;">
+                        <v-card
+                        outlined
+                        style="width: 10rem;"
+                        v-for="fig in page.gallery"
+                        :key="fig.image.url"
+                        >
+                            <v-img :src="imageUrl(fig.image)" height="200px"></v-img>
+                            <v-card-text>
+                                <v-textarea v-model="fig.caption" rows="1" auto-grow/>
+                            </v-card-text>
+                        </v-card>
+                    </draggable>
+                </v-row>
+            </v-container>
 
-            <div class="field" style="border: 0.5px solid grey; padding: 1em; border-radius: 0.3em;">
-                <label>gallery</label>
-                <draggable class="grid" tag="div" v-model="gallery" >
-                    <div class="card" v-for="fig in gallery" :key="fig.image.title">
-                        <div class="card-media">
-                            <img :src="imageUrl(fig.image)" :title= "fig.image.title"/>
-                        </div>
-                        <div class="card-text">
-                            <textarea-autosize rows="1" v-model="fig.caption" placeholder="caption"/>
-                        </div>
-                        <div class="card-buttons">
-                            <button type="button" class="button icon" v-on:click="removeFigure(fig)">
-                                <i class="trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </draggable>
-
-                <div class="control">
-                    <label class="file-input" for="gallery">+ add image</label>
-                    <input 
-                        name="gallery" 
-                        id="gallery" 
-                        type="file" 
-                        accept="image/png image/jpg" 
-                        v-on:change="onFilesChange"
-                        multiple="" 
-                    />
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="field">
-                <label>content</label>
-                <div class="control">
-                    <textarea-autosize rows="1" v-model="content" placeholder="markdown"></textarea-autosize>
-                </div>
-            </div>
-        </section>
-    </form>
+            <v-textarea
+                v-model="page.content"
+                auto-grow
+                rows="2"
+                label="content"
+            ></v-textarea>
+        </v-container>
+    </v-form>
 </template>
-
-<style scoped lang="scss">
-@import"../style/form.scss";
-@import "../style/card.scss";
-</style>
 
 <script lang="js">
 import draggable from 'vuedraggable'
 import YAML from 'yaml'
 import {resizeImage} from '../utils'
+import slugify from 'slugify'
+
 export default {
     name: "EditProject",
     components: {draggable},
-    data: function() {
+    data:function(){
         return {
-            title: "",
-            content: "",
-            gallery: []
-        } 
+            page: {
+                title: "",
+                gallery: [],
+                content: ""
+            }
+        }
     },
 
     computed: {
@@ -88,6 +83,25 @@ export default {
     },
 
     methods:{
+        save(){
+            let project_id = slugify(this.page.title)+".md"
+            
+            this.$Progress.start()
+            this.$store.dispatch('saveProject', {
+                project_id: project_id, 
+                project: this.page
+            })
+            .then((new_project_id)=>{
+                this.$Progress.finish()
+                alert(`project ${new_project_id} saved`)
+                this.$router.push({name: 'listProjects'})
+            })
+            .catch((error)=>{
+                this.$Progress.fail();
+                alert(error.message)
+            })
+        },
+        
         imageUrl(image){
             const jekyll = this.$store.state.jekyll
             if(image.url.startsWith("data:")){
@@ -95,26 +109,6 @@ export default {
             }else{
                 return jekyll.getRawContentUrl(image.url)
             }
-        },
-
-        create(){
-            const jekyll = this.$store.state.jekyll;
-
-            this.$Progress.start()
-            jekyll.saveNewProject({
-                title: this.title,
-                content: this.content,
-                gallery: JSON.parse(JSON.stringify(this.gallery))
-            })
-            .then(()=>{
-                this.$Progress.finish();
-                alert(`Project ${this.title} created`);
-                this.$router.push({name: 'listProjects'})
-            })
-            .catch((err)=>{
-                this.$Progress.fail();
-                alert(err.name+": "+err.message)
-            })
         },
 
         onFilesChange(event){

@@ -1,77 +1,41 @@
 <template>
-    <div>
-		<header>
-			<h2>Pages</h2>
-		</header>
-        <ul>
-            <li class="fadeEnter" v-for="page in pages" :key="page.id">
-                <router-link :to="{name: 'editPage', params: {id: page.id}}">
-                    {{page.title}}</br>
-					<small>{{page.id}}</small>
-                </router-link>
-            </li>
-        </ul>
-    </div>
+	<v-container>
+		<v-toolbar flat>
+			<v-toolbar-title>Pages</v-toolbar-title>
+		</v-toolbar>
+
+		<v-divider></v-divider>
+
+		<v-list
+			two-line
+			v-for="page in site.pages"
+			:key="page.id"
+		>
+			<v-list-item
+				:to="{name: 'editPage', params: {id: page.id}}"
+			>
+				<v-list-item-content>
+					<v-list-item-title>
+					{{page.title}}
+					</v-list-item-title>
+					<v-list-item-subtitle>
+					{{page.id}}
+					</v-list-item-subtitle>
+				</v-list-item-content>
+				<v-list-item-action>
+					<v-btn icon>
+						<v-icon color="grey lighten-1">mdi-pencil</v-icon>
+					</v-btn>
+				</v-list-item-action>
+			</v-list-item>
+		</v-list>
+	</v-container>
 </template>
 
-<style scoped>
-	header{
-		display: flex;
-		justify-content: space-between;
-		padding: 1rem;
-	}
-
-	/* List */
-	li{
-		padding: 0;
-	}
-
-	li a{
-		padding: 1rem 1rem;
-		display: block;
-	}
-
-	li a small{
-		color: grey;
-		font-style: italic;
-	}
-
-	li a:hover{
-		/* background-color: rgb(245,245,245); */
-		/* text-decoration: none; */
-	}
-	li:not(:last-of-type){
-		border-bottom: 1px solid lightgrey;
-	}
-</style>
-
 <script>
+import {mapState} from 'vuex'
 export default {
 	name: "ListPages",
-	data: function(){
-		return {
-			pages: []	
-		}
-	},
-	mounted(){
-		this.get()
-	},
-
-	methods:{
-		get(){
-			
-			const jekyll = this.$store.state.jekyll
-
-			this.$Progress.start()	
-			jekyll.listPages()
-			.then((pages)=>{
-				this.pages=pages;
-				this.$Progress.finish();
-			})
-			.catch(()=>{
-				this.$Progress.fail()
-			})
-		}
-	}
+	computed: mapState(['site'])
 };
 </script>

@@ -31,14 +31,6 @@
     </form>
 </template>
 
-<style scoped lang="scss">
-@import"../style/form.scss";
-form header{
-    display: flex;
-    justify-content: space-between;
-}
-</style>
-
 <script>
 export default {
     data: function(){

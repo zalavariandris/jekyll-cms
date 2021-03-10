@@ -138,6 +138,7 @@ class Jekyll{
     owner?: string;
     repo?: string;
     branch?: string;
+    token?:string;
     octokit: any;
     stage: object = {};
     listeners: object = {};
@@ -165,14 +166,6 @@ class Jekyll{
     /* HELPERS */
     slugify(text: string): string{
         return slugify(text).toLowerCase()
-    }
-
-    get token(){
-        return localStorage['accessToken'];
-    }
-
-    set token(value){
-        localStorage['accessToken'] = value;
     }
 
     log(msg:string){

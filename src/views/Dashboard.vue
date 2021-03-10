@@ -6,13 +6,38 @@
             <h2>Dashboard</h2>
         </header>
 
-        <section>
+        <v-form @submit.prevent="connect">
             <h3>User</h3>
-            <dl>
-                <dt>token</dt>
-                <dd>{{$store.state.host.token}}</dd>
-            </dl>
-        </section>
+            <v-text-field
+            v-model="$store.state.user.token"
+            label="token"
+            ></v-text-field>
+
+            <v-divider></v-divider>
+
+            <h3>Host</h3>
+
+            <v-text-field
+            v-model="$store.state.host.owner"
+            label="owner"
+            ></v-text-field>
+            <v-text-field
+            v-model="$store.state.host.repo"
+            label="repo"
+            ></v-text-field>
+            <v-text-field
+            v-model="$store.state.host.branch"
+            label="branch"
+            ></v-text-field>
+            <v-btn
+                class="mr-4"
+                type="submit"
+                color="primary"
+            >
+                login
+            </v-btn>
+
+        </v-form>
 
         <section>
             <h3>Site</h3>
@@ -23,30 +48,14 @@
                 <dd>eg: Judit Fischer`s portfolio</dd>
             </dl>
         </section>
-
-        <section>
-            <h3>Host</h3>
-            <dl>
-                <dt>owner</dt>
-                <dd>{{$store.state.host.owner}}</dd>
-                <dt>repo</dt>
-                <dd>{{$store.state.host.repo}}</dd>
-                <dt>branch</dt>
-                <dd>{{$store.state.host.branch}}</dd>
-            </dl>
-        </section>
     </div>
 </template>
 
-<style scoped lang="scss">
-@import"../style/form.scss";
-</style>
-
 <script>
 export default {
-    data: function(){
-        return {
-
+    methods: {
+        connect(){
+            this.$store.dispatch("login")
         }
     }
 }

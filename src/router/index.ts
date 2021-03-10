@@ -20,32 +20,96 @@ import store from '@/store'
 
 
 import Login from "@/views/Login.vue"
-import FireLogin from '@/views/FireLogin.vue'
 
 import Site from "@/views/Site.vue"
 
+import axios from 'axios'
+
+import JekyllTree from '@/views/JekyllTree.vue'
+import Jekyll from '@/jekyll'
+import * as jekyll2 from '@/jekyll2'
+
 Vue.use(VueRouter)
 
+
 const routes: Array<RouteConfig> = [
-  { path: "/login", name: "login", component: Login},
+  { path: "/login", name: "login", component: Login,},
+
+  { path: "/jekyll", component: JekyllTree},
 
   { 
     path: "/",
     name: 'site',
     component: Site,
+    beforeEnter(to, from, next){
+      console.log("pull...")
+      store.dispatch('pull', {
+        owner: "zalavariandris",
+        repo: "zalavaridesign_jekyll",
+        branch: "master",
+        token: localStorage.getItem('accessToken')
+      })
+      .then(()=>{
+        console.log("done!")
+        next()
+      })
+    },
 
     children: [
-      { path: 'projects', name: "listProjects", component: ListProjects },
+      { 
+        path: 'projects', 
+        name: "listProjects", 
+        component: ListProjects,
+        // beforeEnter(to, from, next){
+        //   store.dispatch('loadProjects')
+        //   .then(()=>next())
+        // }
+       },
   
       { path: 'projects/new', name: 'newProject', component: NewProject },
-      { path: 'projects/:id/edit', name: 'editProject', component: EditProject },
+      { 
+        path: 'projects/:id/edit', 
+        name: 'editProject', 
+        component: EditProject,
+        beforeEnter(to, from, next){
+          
+          const project_id = to.params.id
+          const site:jekyll2.ISite = store.state.site
+          const idx = site.projects.findIndex(p=>p.id==project_id)
+          store.state.page = site.projects[idx]
+          next()
+          // const project_id = to.params.id
+          // store.dispatch('loadProject', project_id)
+          // .then(()=>next())
+        }
+     },
     
-      { path: 'posts', name: "listPosts", component: ListPosts },
+      { 
+        path: 'posts', 
+        name: "listPosts", 
+        component: ListPosts,
+        // beforeEnter(to, from, next){
+        //   store.dispatch('loadPosts')
+        //   .then(()=>next())
+        // }
+      },
       { path: 'posts/new', name: 'newPost', component: NewPost   },
       { path: 'posts/:id/edit', name: 'editPost', component: EditPost },
     
-      { path: "pages", name: 'listPages', component: ListPages},
-      { path: "pages/:id/edit", name: 'editPage', component: EditPage},
+      { 
+        path: "pages", 
+        name: 'listPages', 
+        component: ListPages,
+        beforeEnter(to, from, next){
+          store.dispatch('loadPages')
+          .then(()=>next())
+        }
+      },
+      { 
+        path: "pages/:id/edit", 
+        name: 'editPage', 
+        component: EditPage
+      },
     
       { path: "dashboard", name: 'dashboard', component: Dashboard},
     
@@ -58,14 +122,14 @@ const router = new VueRouter({
   routes
 })
 
-router.beforeEach( (to, from, next)=>{
-  console.log(from.path, to.path)
-  const LoggedIn = store.state.status === 'logged-in'
-  if(LoggedIn || to.name=="login"){
-    next()
-  }else{
-    next({name: "login"})
-  }
-})
+// router.beforeEach( (to, from, next)=>{
+//   console.log(from.path, to.path)
+//   const LoggedIn = store.state.status === 'logged-in'
+//   if(LoggedIn || to.name=="login"){
+//     next()
+//   }else{
+//     next({name: "login"})
+//   }
+// })
 
 export default router
