@@ -94,7 +94,15 @@ const routes: Array<RouteConfig> = [
         // }
       },
       { path: 'posts/new', name: 'newPost', component: NewPost   },
-      { path: 'posts/:id/edit', name: 'editPost', component: EditPost },
+      { path: 'posts/:id/edit', name: 'editPost', component: EditPost,
+        beforeEnter(to, from, next){
+          const post_id = to.params.id
+          const site:jekyll2.ISite = store.state.site
+          const idx = site.posts.findIndex(p=>p.id==post_id)
+          store.state.page = site.posts[idx]
+          next()
+        }
+    },
     
       { 
         path: "pages", 

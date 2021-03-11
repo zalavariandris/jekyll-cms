@@ -39,11 +39,37 @@ interface IPage{
     [key:string]: unknown;
 };
 
+class Page implements IPage{
+    title: string;
+    date: string;
+    categories: Array<string>;
+    collection: string;
+    tags: Array<string>
+    name: string;
+    path: string;
+    content: string;
+    [key:string]: unknown;
+    constructor(){
+        this.title = "";
+        this.date = "";
+        this.categories = [""];
+        this.collection = "";
+        this.tags = [""];
+        this.name= "";
+        this.path= "";
+        this.content= "";
+    }
+
+    get id():string{
+        return this.title
+    }
+}
+
 interface ISite{
     drafts: Array<[string, IBlob]>,
     includes: Array<[string, IBlob]>,
     layouts: Array<[string, IBlob]>,
-    posts: Array<IBlob>,
+    posts: Array<IPage>,
     data: Array<[string, IBlob]>,
     sass: Array<[string, IBlob]>,
     pages: Array<IPage>,
@@ -400,4 +426,4 @@ function diff(git:Git, origin:Git):Change{
     return change
 }
 
-export {Git, IBlob, sha_from_content, pull, push, diff, ISite, IPage, site_from_git, site_to_git, page_from_path, getRawContentUrl}
+export {Git, IBlob, sha_from_content, pull, push, diff, ISite, IPage, Page, site_from_git, site_to_git, page_from_path, getRawContentUrl}

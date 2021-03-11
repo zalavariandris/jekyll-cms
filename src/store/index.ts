@@ -23,37 +23,59 @@ Vue.use(Vuex)
 
 import {IBlob, ISite, IPage, pull, site_to_git, site_from_git, push, Git} from '@/jekyll2'
 
-export default new Vuex.Store({
-  state: {
-    status: '',
-    user:{
-      token: localStorage.getItem('accessToken')
-    },
+interface IUser{
+  token: string | null;
+}
 
-    host: {
-      type: '',
-      owner: 'zalavariandris',
-      repo: 'zalavaridesign_jekyll',
-      branch: 'master'
-    },
+interface IHost{
+  type: string;
+  owner: string;
+  repo: string;
+  branch: string;
+}
 
-    site: {
-      drafts: Array<[string, IBlob]>(),
-      includes: Array<[string, IBlob]>(),
-      layouts: Array<[string, IBlob]>(),
-      posts: Array<IBlob>(),
-      data: Array<[string, IBlob]>(),
-      sass: Array<[string, IBlob]>(),
-      pages: Array<IPage>(),
-      static_files: Array<[string, IBlob]>(),
-      ignored: Array<[string, IBlob]>(),
-      collections: Array<string>()
-    },
-    page: null,
-    origin: null,
-    projects_status:'',
-  	jekyll
+interface IState{
+  status: string;
+  user: IUser;
+  host: IHost;
+  site: ISite;
+  page: IPage | null;
+  origin: Git | null;
+}
+
+const state: IState = {
+  status: '',
+  user:{
+    token: localStorage.getItem('accessToken')
   },
+
+  host: {
+    type: '',
+    owner: 'zalavariandris',
+    repo: 'zalavaridesign_jekyll',
+    branch: 'master'
+  },
+
+  site: {
+    drafts: Array<[string, IBlob]>(),
+    includes: Array<[string, IBlob]>(),
+    layouts: Array<[string, IBlob]>(),
+    posts: Array<IPage>(),
+    data: Array<[string, IBlob]>(),
+    sass: Array<[string, IBlob]>(),
+    pages: Array<IPage>(),
+    static_files: Array<[string, IBlob]>(),
+    ignored: Array<[string, IBlob]>(),
+    collections: Array<string>()
+  },
+  page: null,
+  origin: null,
+  // projects_status:'',
+  // jekyll
+}
+
+export default new Vuex.Store({
+  state,
 
   getters: {
     git(state): Git{
@@ -140,160 +162,46 @@ export default new Vuex.Store({
         })
       })
 
-    }
+    },
 
-    // loadProjects({commit}){
-    //   return jekyll.listProjects()
-    //   .then((projects)=>{
-    //     commit("set_projects", projects)
-    //   }).catch(error=>{
-    //     commit("set_pages", [])
-    //   })
-    // },
-
-    // loadPosts({commit}){
-    //   return jekyll.listPosts()
-    //   .then((posts)=>{
-    //     commit("set_posts", posts)
-    //   }).catch(error=>{
-    //     commit("set_pages", [])
-    //   })
-    // },
-
-    // loadPages({commit}){
-    //   return jekyll.listPages()
-    //   .then((pages)=>{
-    //     commit("set_pages", pages)
-    //   }).catch(error=>{
-    //     commit("set_pages", [])
-    //   })
-    // },
-
-    // loadProject({commit, state}, project_id){
-    //   return jekyll.fetchProject(project_id)
-    //   .then(project=>{
-    //     commit('set_page', project)
-    //   })
-    // },
-
-    // loadPost({commit, state}, post_id){
-    //   return jekyll.fetchPost(post_id)
-    //   .then(post=>{
-    //     commit('set_page', post)
-    //   })
-    // },
-
-    // loadPage({commit, state}, page_id){
-    //   return jekyll.fetchPage(page_id)
-    //   .then(page=>{
-    //     commit('set_page', page)
-    //   })
-    // },
-
-    // saveProject({commit, state}, {project_id, project}){
-    //   return jekyll.saveProject(project_id, project)
-    // },
-
-    // savePost({commit, state}, {post_id, post}){
-    //   return jekyll.savePost(post_id, post)
-    // },
-
-    // savePage({commit, state}, {page_id, page}){
-    //   return jekyll.savePage(page_id, page)
-    // },
-
-    // deleteProject({commit, state}, project_id){
-    //   return jekyll.deleteProject(project_id)
-    // },
-
-    // deletePost({commit, state}, post_id){
-    //   return jekyll.deletePost(post_id)
-    // },
-
-    // autologin({commit, state}):Promise<void>{
-    //   return new Promise( (resolve, reject)=>{        
-    //       // grab token from local storage
-    //       const token = localStorage.getItem('accessToken')
-    //       const IsTokenValid = token!.length!=40
-
-    //       // grab host from local storage
-    //       const host = 'host' in localStorage ? JSON.parse(localStorage.getItem('host')!) : null
-    //       const IsHostValid = host && host.owner && host.repo && host.branch
-
-    //       if(IsTokenValid && IsHostValid){
-    //         commit('auth_success', {
-    //           user: {token},
-    //           host: host
-    //         })
-    //         resolve()
-    //       }
+		createProject({commit, state}){
+      const site:ISite = state.site
+      const project: IPage = {
+				title: "Untitled",
+				date: "2020-01-01",
+				id: "_projects/untitled.md",
+				categories: [],
+				collection: "projects",
+				tags: [],
+				name: "untitled.md",
+				path: "_projects/untitled.md",
+				content: ""
+			}
+			site.projects.splice(0, 0,project)
+      return project.id
+		},
     
-    //       // grab repo from config
-    //       axios("./admin.config.json")
-    //       .then(response=>{
-    //         commit('auth_success', {
-    //           user: {token},
-    //           host: response.data.host
-    //         })
-    //         resolve()
-    //       })
-    //       .catch(error=>{
-    //         reject(error)
-    //       })
-    //     });
-    // },
+		deleteProject({commit, state}, project_id){
+      const site:ISite = state.site
+			const idx = site.projects.findIndex(p=>p.id===project_id)
+			site.projects.splice(idx, 1)
+		},
 
-    // login({commit, state}, {owner, repo, branch, token}):Promise<unknown>{
-    //   return new Promise((resolve, reject)=>{
-    //     commit('auth_request');
-
-    //     const octokit = new Octokit({
-    //       auth: token
-    //     });
-
-    //     let sha = undefined;
-    //     octokit.repos.getContent({
-    //         owner: owner,
-    //         repo: repo,
-    //         ref: branch,
-    //         path: "/admin/admin.config.json",
-    //         headers: {'If-None-Match': ''} //prevent cache
-    //     })
-    //     .then( (response:any)=>{
-    //         sha = response.data.sha;
-    //     } )
-    //     .catch( error=>{
-    //         sha = undefined
-    //     } )
-    //     .finally( ()=>{
-    //       const content = JSON.stringify({owner, repo, branch})
-    //       octokit.repos.createOrUpdateFileContents({
-    //         owner,
-    //         repo,
-    //         branch,
-    //         path: "admin/admin.config.json",
-    //         message: "authenticate by updating ghpages.config",
-    //         content: b64EncodeUnicode(content),
-    //         sha: sha
-    //       })
-    //       .then( response=>{
-    //         commit('auth_success', {owner, repo, branch, token})
-    //         resolve(response)
-    //       })
-    //       .catch( error=>{
-    //         commit('auth_error')
-    //         reject(error)
-    //       })
-    //     })
-    //   })
-    // },
-
-    // logout({commit}):Promise<void>{
-    //   return new Promise((resolve, reject)=>{
-    //     commit('logout')
-    //     localStorage.removeItem('accessToken')
-    //     resolve()
-    //   })
-    // }
+    createPost({commit, state}){
+      const site:ISite = state.site
+      const post: IPage = {
+				title: "Untitled",
+				date: "2020-01-01",
+				id: "_posts/untitled.md",
+				categories: [],
+				collection: "posts",
+				tags: [],
+				name: "untitled.md",
+				path: "_posts/untitled.md",
+				content: ""
+			}
+			site.posts.splice(0, 0, post)
+      return post.id
+		},
   }
 })

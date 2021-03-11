@@ -5,7 +5,7 @@
 			<v-spacer></v-spacer>
 			<v-btn
 				color="primary"
-				:to="{name:'newProject'}"
+				@click="createProject"
 			>
 				<v-icon left>mdi-plus</v-icon>
 				New Project
@@ -42,9 +42,18 @@
 </template>
 
 <script lang="js">
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 export default {
 	name: "ListProjects",
-	computed: mapState(['site'])
+	computed: mapState(['site']),
+	methods: {
+		// ...mapActions(['createProject'])
+		createProject(){
+			this.$store.dispatch('createProject')
+			.then((project_id)=>{
+				this.$router.push({name: 'editProject', params: {id: project_id}})
+			})
+		}
+	}
 };
 </script>

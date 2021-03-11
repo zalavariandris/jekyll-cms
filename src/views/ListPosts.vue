@@ -5,6 +5,7 @@
 			<v-spacer></v-spacer>
 			<v-btn
 				color="primary"
+				@click="createPost"
 			>
 				<v-icon left>mdi-plus</v-icon>
 				New Post
@@ -44,6 +45,14 @@
 import { mapState } from 'vuex'
 export default {
 	name: "ListPosts",
-	computed: mapState(['site'])
+	computed: mapState(['site']),
+	methods: {
+		createPost(){
+			this.$store.dispatch('createPost')
+			.then((post_id)=>{
+				this.$router.push({name: 'editPost', params: {id: post_id}})
+			})
+		}
+	}
 };
 </script>

@@ -1,113 +1,94 @@
 <template>
-    <form @submit.prevent="save" class="editor">
-        <header>
-            <h2>Edit Post</h2>
-            <div class="actions">
-                <input class="is-primary" type="submit" value="save">
-                <button type="button" class="is-danger" v-on:click="remove">delete</button>
-            </div>
-        </header>
+    <v-container v-if="page">
+        <v-toolbar flat>
+            <v-toolbar-title>Edit Post</v-toolbar-title>
+            <v-spacer></v-spacer>
 
-        <section v-if="title">		
-			<div class="field">
-				<label>title</label>
-				<div class="control">
-					<input v-model="title" type="text" placeholder="title">
-					<output v-show="filename!=id" class="label">{{filename}}</output>
-				</div>
-			</div>
+            <v-btn
+                color="error"
+                outlined
+                @click="this.delete"
+            >
+                <v-icon left>
+                    mdi-delete
+                </v-icon>
+                delete
+            </v-btn>
+        </v-toolbar>
 
-            <div class="field">
-				<label>date</label>
-				<div class="control">
-                    <input v-model="date" type="date"/>
-				</div>
-			</div>
+        <v-text-field
+            v-model="page.title"
+            label="title"
+        ></v-text-field>
+        <v-text-field
+            v-model="page.date"
+            label="date"
+        ></v-text-field>
+        <output>{{page.id}}</output>
 
-            <div class="fieldset">
-                <label>image</label>
-                <div class="card">
-                    <div class="card-media">
-                        <div v-if="image" class="control">
-                            <img :src="imageUrl(image)" :title= "image.title"/>
-                        </div>
-                        <div v-else class="control">
-                            <label class="file-input" for="gallery">+ set image</label>
-                            <input 
-                                name="gallery" 
-                                id="gallery" 
-                                type="file" 
-                                accept="image/png image/jpg" 
-                                v-on:change="onFileChange"
-                            />
-                        </div>
-                    </div>
-                    <div class="card-buttons">
-                        <button v-if="image" type="button" class="button icon" @click="setImage(null)">
-                            <i class="trash"></i>
-                        </button>
-                    </div>
-                </div>
-			</div>
-        </section>
+        <v-container>
+            <v-file-input
+                multiple
+                hide-input
+                label="image"
+                @change="onFileChange"
+            ></v-file-input>
+        </v-container>
 
-        <section v-if="title">
-            <div class="field">
-				<label>Content</label>
-				<div class="control">
-					<textarea-autosize rows="1" v-model="content" placeholder="markdown"></textarea-autosize>
-				</div>
-			</div>
-        </section>
-	</form>
+
+        <v-textarea
+            v-model="page.content"
+            auto-grow
+            rows="2"
+            label="content"
+        ></v-textarea>
+
+    </v-container>
 </template>
 
 <script lang="js">
 import moment from 'moment'
 import {resizeImage} from '../utils'
+import { mapState } from 'vuex'
+import slugify from 'slugify'
 export default {
     name: "NewPost",
-    data: function() {
-        return {
-            title: "",
-            date: "",
-            content: "",
-            image: null
-        } 
-    },
 
-    mounted: function(){
-        this.fetch()
+    mounted(){
+
     },
 
     computed: {
-        id: function(){
-            return this.$route.params.id
+        ...mapState(['site', 'page']),
+        name(){
+            return slugify(this.page.title, "_").toLowerCase()+".md";
         },
+        path(){
+            return "_posts/"+this.page.name;
+        },
+        id(){
+            return this.page.path
+        }
+    },
 
-        filename: function(){
-            const jekyll = this.$store.state.jekyll;
-            return this.date+"-"+jekyll.slugify(this.title)+".md"
+    watch:{
+        name(value){
+            this.page.name = value
+        },
+        path(value){
+            this.page.path = value
+        },
+        id(value){
+            this.page.id = value
         }
     },
 
     methods:{
-        fetch(){
-            const jekyll = this.$store.state.jekyll;
-            const post_id = this.$route.params.id
-
-            this.$Progress.start()
-            jekyll.fetchPost(post_id)
-            .then(post=>{
-                this.title = post.title;
-                this.date = post.date;
-                this.content = post.content;
-                this.image = post.image;
-
-                this.$Progress.finish();
-            })
-            .catch(()=>{
-                this.$Progress.fail();
+        delete(){
+            // remove project from site
+			this.$store.dispatch('deletePost', this.page.id)
+            .then(()=>{
+                this.$router.push({name: 'listPosts'})
             })
         },
 
@@ -120,45 +101,45 @@ export default {
             }
         },
 
-        save(){
-            const jekyll = this.$store.state.jekyll;
-            let post = {
-                title: this.title,
-                date: moment(this.date).format("YYYY-MM-DD"),
-                content: this.content
-            }
-            if(this.image){
-                post.image = JSON.parse(JSON.stringify(this.image))
-            }
-            this.$Progress.start()
-            jekyll.saveNewPost(post)
-            .then(()=>{
-                this.$Progress.finish();
-                alert(`Post ${this.title} updated`);
-                this.$router.push({name: 'listPosts'});
-            })
-            .catch((err)=>{
-                this.$Progress.fail();
-                alert(err.name+"\n"+err.message);
-            })
-        },
+        // save(){
+        //     const jekyll = this.$store.state.jekyll;
+        //     let post = {
+        //         title: this.title,
+        //         date: moment(this.date).format("YYYY-MM-DD"),
+        //         content: this.content
+        //     }
+        //     if(this.image){
+        //         post.image = JSON.parse(JSON.stringify(this.image))
+        //     }
+        //     this.$Progress.start()
+        //     jekyll.saveNewPost(post)
+        //     .then(()=>{
+        //         this.$Progress.finish();
+        //         alert(`Post ${this.title} updated`);
+        //         this.$router.push({name: 'listPosts'});
+        //     })
+        //     .catch((err)=>{
+        //         this.$Progress.fail();
+        //         alert(err.name+"\n"+err.message);
+        //     })
+        // },
 
-        remove(){
-            const jekyll = this.$store.state.jekyll;
-            const post_id = this.$route.params.id
+        // remove(){
+        //     const jekyll = this.$store.state.jekyll;
+        //     const post_id = this.$route.params.id
 
-            this.$Progress.start()
-            jekyll.deletePost(post_id)
-            .then(()=>{
-                this.$Progress.finish();
-                alert(`Post '${post_id} deleted`)
-                this.$router.push({name: 'listPosts'})
-            })
-            .catch((err)=>{
-                this.$Progress.fail();
-                alert(err.name+"\n"+err.message)
-            })
-        },
+        //     this.$Progress.start()
+        //     jekyll.deletePost(post_id)
+        //     .then(()=>{
+        //         this.$Progress.finish();
+        //         alert(`Post '${post_id} deleted`)
+        //         this.$router.push({name: 'listPosts'})
+        //     })
+        //     .catch((err)=>{
+        //         this.$Progress.fail();
+        //         alert(err.name+"\n"+err.message)
+        //     })
+        // },
 
         onFileChange(event){
             const files = event.target.files;

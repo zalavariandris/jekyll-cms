@@ -4,16 +4,6 @@
             <v-toolbar flat>
                 <v-toolbar-title>Edit Project</v-toolbar-title>
                 <v-spacer></v-spacer>
-                <v-btn
-                    color="primary"
-                    outlined
-                    @click="save"
-                >
-                    <v-icon left>
-                        mdi-content-save
-                    </v-icon>
-                    save
-                </v-btn>
 
                 <v-btn
                     color="error"
@@ -96,46 +86,11 @@ export default {
     computed: mapState(['site', 'page']),
 
     methods:{
-        fetch(){
-            this.page = JSON.parse(JSON.stringify(this.$store.state.page))
-        },
-
-        save(){
-            // make sure curren project is on site
-            
-            const idx = this.$store.state.site.projects.findIndex(p=>p.id==this.$store.state.page.id)
-            console.assert(_.isEqual(this.$store.state.site.projects[idx],this.$store.state.page))
-
-            this.$Progress.start()
-            this.$store.dispatch('push')
-            .then(()=>{
-                alert('project saved')
-                this.$Progress.finish()
-                this.$router.push({name: 'listProjects'})
-            })
-            .catch(err=>{
-                this.$Progress.fail()
-                alert(err.message)
-            })
-        },
-
         delete(){
             // remove project from site
-            const collection = this.page.collection
-            const idx = this.site[collection].findIndex(p=>p.id===this.page.id)
-            this.site[collection].splice(idx, 1)
-
-            // push
-            this.$Progress.start()
-            this.$store.dispatch('push')
+			this.$store.dispatch('deleteProject', this.page.id)
             .then(()=>{
-                alert('project deleted')
-                this.$Progress.finish()
                 this.$router.push({name: 'listProjects'})
-            })
-            .catch(err=>{
-                this.$Progress.fail()
-                alert(err.message)
             })
         },
 
