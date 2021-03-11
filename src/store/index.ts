@@ -50,7 +50,7 @@ export default new Vuex.Store({
       collections: Array<string>()
     },
     page: null,
-    origin: {},
+    origin: null,
     projects_status:'',
   	jekyll
   },
@@ -112,6 +112,7 @@ export default new Vuex.Store({
         })
         .then((git)=>{
           state.origin = git
+
           state.site = site_from_git(git)
           resolve()
         })

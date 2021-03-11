@@ -374,21 +374,30 @@ function site_to_git(site:ISite):Git{
 }
 
 interface Change{
-    added: [IBlob],
-    removed: [IBlob],
-    updated: [IBlob]
+    [path:string]: 'added' | 'removed' | 'updated' | null
 }
 
-function diff(origin:Git, git:Git):Change{
-    const added = Object.fromEntries(Object.entries(git.tree).filter(([path, blob])=>{
-        return !(path in Object.keys(origin.tree))
-    }))
-    const removed = Object.fromEntries(Object.entries(origin.tree).filter(([path, blob])=>{
-        return !(path in Object.keys(git.tree))
-    }))
-    const updated = []
+function diff(git:Git, origin:Git):Change{
+    let change: Change = {};
+    const current_paths = new Set(Object.keys(git.tree))
+    const origin_paths = new Set(Object.keys(origin.tree))
+    for(let [path, blob] of Object.entries(git.tree)){
+        // is added
+        
+        if(!origin_paths.has(path)){
+            change[path] = 'added'
+        }else if(blob.sha != origin.tree[path].sha){
+            change[path] = 'updated'
+        }
+    }
 
-    return {added, removed, updated}
+    for(let path of Object.keys(origin.tree)){
+        if( !current_paths.has(path) ){
+            change[path] = 'removed'
+        }
+    }
+
+    return change
 }
 
-export {sha_from_content, pull, push, Git, site_from_git, site_to_git, page_from_path, ISite, IBlob, IPage, getRawContentUrl}
+export {Git, IBlob, sha_from_content, pull, push, diff, ISite, IPage, site_from_git, site_to_git, page_from_path, getRawContentUrl}

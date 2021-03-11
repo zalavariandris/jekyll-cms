@@ -9,6 +9,18 @@
       {{$store.state.host.repo}}<br/><v-chip>{{$store.state.host.branch}}</v-chip>
       <v-btn @click="pull">pull</v-btn>
       <v-btn @click="push">push</v-btn>
+
+      <v-tooltip bottom v-if="isGitModified">
+        <template v-slot:activator="{ on, attrs }">
+          <v-chip 
+            v-bind="attrs"
+            v-on="on"
+          >
+          modified
+          </v-chip>
+        </template>
+        <span>{{change | pretty}}</span>
+      </v-tooltip>
       
       <v-spacer></v-spacer>
       {{status}}
@@ -32,11 +44,34 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import {diff} from '@/jekyll2'
+import YAML from 'yaml'
 export default Vue.extend({
   computed: {
     status(){
       return this.$store.state.status;
+    },
+
+    change(){
+      if(this.$store.getters.git && this.$store.state.origin){
+        return diff(this.$store.getters.git, this.$store.state.origin) 
+      }
+    },
+
+    isGitModified(){
+      if(this.change){
+        for(let path in this.change){
+          return true;
+        }
+        return false;
+      }
     }
+  },
+
+  filters: {
+          pretty(value){
+            return YAML.stringify(value)
+        }
   },
 
   methods: {
