@@ -8,13 +8,16 @@ import pathParse from 'path-parse'
 import axios from 'axios'
 import moment from 'moment'
 
+import {sha_from_content} from '@/jekyll2'
+
 declare global {
   interface Window { 
     YAML: any;
     urljoin: urljoin,
     pathParse: any,
     app: any,
-    moment: any
+    moment: any,
+    sha_from_content: any
   }
 }
 
@@ -22,6 +25,7 @@ window.YAML = YAML;
 window.urljoin = urljoin;
 window.pathParse = pathParse
 window.moment = moment
+window.sha_from_content = sha_from_content
 
 Vue.config.productionTip = false
 

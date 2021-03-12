@@ -26,7 +26,6 @@
             v-model="page.date"
             label="date"
         ></v-text-field>
-        <v-chip>name: {{page.name}}</v-chip>
         <v-chip>id: {{page.id}}</v-chip>
         <v-chip>path: {{page.path}}</v-chip>
 
@@ -38,11 +37,21 @@
                 @change="(files)=>setImage(files[0])"
             ></v-file-input>
             <v-img
-                :src="page.image.url"
+                v-if="page.image"
+                :src="getRawDataUrl(page.image.url)"
                 max-height="200"
                 max-width="200"
             >
             </v-img>
+            <v-btn
+                v-if="page.image"
+                icon
+                @click="setImage(null)"
+            >
+                <v-icon left>
+                    mdi-delete
+                </v-icon>
+            </v-btn>
         </v-container>
 
 
@@ -59,15 +68,18 @@
 <script lang="js">
 import moment from 'moment'
 import {resizeImage} from '../utils'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import slugify from 'slugify'
+import {sha_from_content} from '@/jekyll2'
+import parseDataUrl from 'parse-data-url'
 
 export default {
     name: "NewPost",
 
 
     computed: {
-        ...mapState(['site', 'page'])
+        ...mapState(['site', 'page']),
+        ...mapGetters(['getRawDataUrl'])
     },
 
     watch:{
@@ -81,8 +93,7 @@ export default {
 
     methods:{
         update(){
-            this.page.name = moment(this.page.date).format("YYYY-MM-DD")+"-"+slugify(this.page.title, "_").toLowerCase()+".md";
-            this.page.path = "_posts/"+this.page.name;
+            this.page.path = "_posts"+"/"+moment(this.page.date).format("YYYY-MM-DD")+"-"+slugify(this.page.title, "_").toLowerCase()+".md"
             this.page.id = "/"+moment(this.page.date).format("YYYY/MM/DD")+"/"+slugify(this.page.title, "_").toLowerCase()
         },
 
@@ -94,49 +105,14 @@ export default {
             })
         },
 
-        // save(){
-        //     const jekyll = this.$store.state.jekyll;
-        //     let post = {
-        //         title: this.title,
-        //         date: moment(this.date).format("YYYY-MM-DD"),
-        //         content: this.content
-        //     }
-        //     if(this.image){
-        //         post.image = JSON.parse(JSON.stringify(this.image))
-        //     }
-        //     this.$Progress.start()
-        //     jekyll.saveNewPost(post)
-        //     .then(()=>{
-        //         this.$Progress.finish();
-        //         alert(`Post ${this.title} updated`);
-        //         this.$router.push({name: 'listPosts'});
-        //     })
-        //     .catch((err)=>{
-        //         this.$Progress.fail();
-        //         alert(err.name+"\n"+err.message);
-        //     })
-        // },
-
-        // remove(){
-        //     const jekyll = this.$store.state.jekyll;
-        //     const post_id = this.$route.params.id
-
-        //     this.$Progress.start()
-        //     jekyll.deletePost(post_id)
-        //     .then(()=>{
-        //         this.$Progress.finish();
-        //         alert(`Post '${post_id} deleted`)
-        //         this.$router.push({name: 'listPosts'})
-        //     })
-        //     .catch((err)=>{
-        //         this.$Progress.fail();
-        //         alert(err.name+"\n"+err.message)
-        //     })
-        // },
-
         setImage(file){
             if(!file){
-                delete this.page.image
+                // remove image from static files
+                const idx = this.site.static_files.findIndex(([p, b])=>p==this.page.image.url)
+                this.site.static_files.splice(idx, 1)
+
+                // set frontmatter
+                this.page.image = null
             }else{
                 var reader = new FileReader();
                 reader.addEventListener('load', e=>{
@@ -144,9 +120,19 @@ export default {
 
                     resizeImage(dataURL)
                     .then(dataUrl=>{
-                        console.log(this.page)
+                        // add image to static files
+                        const parsed = parseDataUrl(dataUrl)
+                        // const data = dataUrl.split("base64,")[1] this is the same without a package
+                        // image data seem to start with a '/'
+                        debugger
+                        this.site.static_files.push(["media/"+file.name, {
+                            sha: sha_from_content(parsed.data),
+                            content: parsed.data
+                        }])
+
+                        // set frontmatter
                         this.page.image = {
-                            url: dataURL,
+                            url: "media/"+file.name,
                             title: file.name,
                             alt: ""
                         }

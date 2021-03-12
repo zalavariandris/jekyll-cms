@@ -57,6 +57,18 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-list-item 
+          link
+          :to="{name: 'static_files'}"
+        >
+          <v-list-item-action>
+            <v-icon>mdi-view-dashboard</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Static Files</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
       </v-list>
     </v-navigation-drawer>
 

@@ -17,6 +17,9 @@
       <li>
         <router-link :to="{name: 'dashboard'}">Dashboard</router-link>
       </li>
+      <li>
+        <router-link :to="{name: 'static_files'}">Static Files</router-link>
+      </li>
     </ul>
   </nav>
 </template>

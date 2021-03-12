@@ -21,6 +21,8 @@
                 v-model="page.title"
                 label="title"
             ></v-text-field>
+            <v-chip>id: {{page.id}}</v-chip>
+            <v-chip>path: {{page.path}}</v-chip>
 
             <v-container>
                 <v-row>
@@ -74,6 +76,7 @@ import cardinput from '@/components/cardinput'
 import { mapState } from 'vuex'
 import {getRawContentUrl} from '@/jekyll2'
 import _ from 'lodash'
+import slugify from 'slugify'
 
 export default {
     name: "EditProject",
@@ -94,7 +97,6 @@ export default {
     methods:{
         update(){
             this.page.path = "_"+this.page.collection+"/"+slugify(this.page.title, "_").toLowerCase()+".md";
-            this.page.name = slugify(this.page.title, "_").toLowerCase()+".md";
             this.page.id = "/"+this.page.collection+"/"+slugify(this.page.title, "_").toLowerCase()
         },
 

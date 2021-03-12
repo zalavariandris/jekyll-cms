@@ -23,6 +23,8 @@ import Login from "@/views/Login.vue"
 
 import Site from "@/views/Site.vue"
 
+import ListStaticFiles from '@/views/ListStaticFiles.vue'
+
 import axios from 'axios'
 
 import JekyllTree from '@/views/JekyllTree.vue'
@@ -122,6 +124,8 @@ const routes: Array<RouteConfig> = [
       { path: "dashboard", name: 'dashboard', component: Dashboard},
     
       { path: "IDE", name: 'IDE', component: IDE},
+
+      { path: 'static_files', name: 'static_files', component: ListStaticFiles}
     ]
   }
 ]

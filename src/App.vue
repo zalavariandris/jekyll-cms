@@ -10,7 +10,7 @@
       <v-btn @click="pull">pull</v-btn>
       <v-btn @click="push">push</v-btn>
 
-      <v-tooltip bottom v-if="isGitModified">
+      <v-tooltip bottom v-if="isGitModified" show>
         <template v-slot:activator="{ on, attrs }">
           <v-chip 
             v-bind="attrs"
@@ -19,7 +19,7 @@
           modified
           </v-chip>
         </template>
-        <span>{{change | pretty}}</span>
+        <pre style="white-space: pre-wrap">{{change | pretty}}</pre>
       </v-tooltip>
       
       <v-spacer></v-spacer>
@@ -48,6 +48,9 @@ import {diff} from '@/jekyll2'
 import YAML from 'yaml'
 export default Vue.extend({
   computed: {
+    showtooltip(){
+      return true
+    },
     status(){
       return this.$store.state.status;
     },

@@ -21,7 +21,7 @@ window.axios = axios
 
 Vue.use(Vuex)
 
-import {IBlob, ISite, Page, pull, site_to_git, site_from_git, push, Git} from '@/jekyll2'
+import {IBlob, ISite, IPage, pull, site_to_git, site_from_git, push, Git} from '@/jekyll2'
 
 interface IUser{
   token: string | null;
@@ -39,7 +39,7 @@ interface IState{
   user: IUser;
   host: IHost;
   site: ISite;
-  page: Page | null;
+  page: IPage | null;
   origin: Git | null;
 }
 
@@ -76,12 +76,26 @@ const state: IState = {
   // jekyll
 }
 
+import mime from 'mime-types'
+import urljoin from 'url-join'
+
 export default new Vuex.Store({
   state,
 
   getters: {
     git(state): Git{
       return site_to_git(state.site)
+    },
+
+    getRawDataUrl: (state, getters)=>(path)=>{
+        const blob = getters.git.tree[path]
+        if(!blob){
+            return null
+        }else if(blob.content){
+            return "data:"+mime.lookup(path)+";base64,"+blob.content
+        }else{
+            return urljoin(`https://raw.githubusercontent.com/${state.host.owner}/${state.host.repo}/${state.host.branch}/`, path);
+        }
     }
   },
 
@@ -168,7 +182,7 @@ export default new Vuex.Store({
 
 		createProject({commit, state}){
       const site:ISite = state.site
-      const project = new Page({
+      const project:IPage = {
 				title: "Untitled",
 				date: "2020-01-01",
 				id: "_projects/untitled.md",
@@ -178,7 +192,7 @@ export default new Vuex.Store({
 				name: "untitled.md",
 				path: "_projects/untitled.md",
 				content: ""
-			})
+			}
 			site.projects.splice(0, 0, project)
       return project.id
 		},

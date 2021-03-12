@@ -26,63 +26,20 @@ class Git{
     }
 }
 
-// interface IPage{
-//     title?: string;
-//     date?: string;
-//     id: string;
-//     categories?: Array<string>;
-//     collection?: string;
-//     tags: Array<string>;
-//     name?: string;
-//     path?: string;
-//     content?: string;
-//     [key:string]: unknown;
-// };
-
-class Page{
+interface IPage{
     title: string;
     date: string;
 
-    _id?: string;
-    _name?: string;
-    _path?: string;
-    
-    categories: Array<string>;
-    collection: string | undefined;
-    tags: Array<string>
-    
+    path: string;
+    id: string;
+
+    collection: string;
     
     content: string;
-    [key:string]: unknown;
-    constructor({title, date, categories, collection, tags, name, id, path, content}:{title?:string, date?: string, categories?:string[], collection?:string, tags: string[], name?: string, content?:string, path?:string, id?:string}){
-        this.title = title ? title : "untitled";
-        this.date = date ? date : "";
 
-        this._id = id
-        this._name= name;
-        this._path= path;
-        
-        this.categories = categories ? categories : [];
-        this.collection = collection;
-        this.tags = tags;
-        this.content = content ? content : "";
-    }
+    [key:string]: any;
+};
 
-    get id():string | undefined{
-        if(this._id){
-            return this._id
-        }
-        return this.title
-    }
-
-    get name():string | undefined{
-        return this.title
-    }
-
-    get path():string | undefined{
-        return this.title
-    }
-}
 
 interface ISite{
     drafts: Array<[string, IBlob]>,
@@ -194,6 +151,10 @@ function site_from_git(git:Git):ISite{
         site[name] = []
     }
 
+    const IsPost=(path)=>{
+        return path.startsWith("_posts/")
+    }
+
     const IsCollectionItem=(path)=>{
         return site.collections.some(name=>path.startsWith("_"+name+"/") && !path.startsWith("_posts/"))
     }
@@ -217,13 +178,29 @@ function site_from_git(git:Git):ISite{
             site.layouts.push([path, blob])
         }
 
+        else if(IsPost(path) &&
+                (path.endsWith(".md") || path.endsWith(".html"))){
+            
+                 const result = git.tree[path].content
+                if(!result) debugger
+
+                const md = matter( b64DecodeUnicode(result) )
+            
+                const frontmatter = md.data
+                const text = md.content
+
+                const from_path = page_from_path(path)                        
+                const page = {...from_path, ...frontmatter, collection: 'posts', content: text}
+                
+                site['posts'].push(page)
+        }
+
         else if(IsCollectionItem(path) &&
                (path.endsWith(".md") || path.endsWith(".html"))){
 
             // COLLECTIONS + POSTS
             const collection = pathParse(path).dir.slice(1)
 
-            
             const result = git.tree[path].content
             if(!result) debugger
 
@@ -313,6 +290,7 @@ async function push({owner, repo, branch, token, git, message:string="update wit
         branch
     })
 
+    debugger
     const tree = await octokit.git.createTree({
         owner,
         repo,
@@ -445,4 +423,4 @@ function diff(git:Git, origin:Git):Change{
     return change
 }
 
-export {Git, IBlob, sha_from_content, pull, push, diff, ISite, Page, site_from_git, site_to_git, page_from_path, getRawContentUrl}
+export {Git, IBlob, sha_from_content, pull, push, diff, ISite, IPage, site_from_git, site_to_git, page_from_path, getRawContentUrl}
