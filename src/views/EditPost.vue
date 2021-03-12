@@ -20,19 +20,29 @@
             v-model="page.title"
             label="title"
         ></v-text-field>
+        
+
         <v-text-field
             v-model="page.date"
             label="date"
         ></v-text-field>
-        <output>{{page.id}}</output>
+        <v-chip>name: {{page.name}}</v-chip>
+        <v-chip>id: {{page.id}}</v-chip>
+        <v-chip>path: {{page.path}}</v-chip>
 
         <v-container>
             <v-file-input
                 multiple
                 hide-input
                 label="image"
-                @change="onFileChange"
+                @change="(files)=>setImage(files[0])"
             ></v-file-input>
+            <v-img
+                :src="page.image.url"
+                max-height="200"
+                max-width="200"
+            >
+            </v-img>
         </v-container>
 
 
@@ -51,54 +61,37 @@ import moment from 'moment'
 import {resizeImage} from '../utils'
 import { mapState } from 'vuex'
 import slugify from 'slugify'
+
 export default {
     name: "NewPost",
 
-    mounted(){
-
-    },
 
     computed: {
-        ...mapState(['site', 'page']),
-        name(){
-            return slugify(this.page.title, "_").toLowerCase()+".md";
-        },
-        path(){
-            return "_posts/"+this.page.name;
-        },
-        id(){
-            return this.page.path
-        }
+        ...mapState(['site', 'page'])
     },
 
     watch:{
-        name(value){
-            this.page.name = value
+        'page.title': function(){
+            this.update()
         },
-        path(value){
-            this.page.path = value
-        },
-        id(value){
-            this.page.id = value
+        'page.date': function(){
+            this.update()
         }
     },
 
     methods:{
+        update(){
+            this.page.name = moment(this.page.date).format("YYYY-MM-DD")+"-"+slugify(this.page.title, "_").toLowerCase()+".md";
+            this.page.path = "_posts/"+this.page.name;
+            this.page.id = "/"+moment(this.page.date).format("YYYY/MM/DD")+"/"+slugify(this.page.title, "_").toLowerCase()
+        },
+
         delete(){
             // remove project from site
 			this.$store.dispatch('deletePost', this.page.id)
             .then(()=>{
                 this.$router.push({name: 'listPosts'})
             })
-        },
-
-        imageUrl(image){
-            const jekyll = this.$store.state.jekyll
-            if(image.url.startsWith("data:")){
-                return image.url
-            }else{
-                return jekyll.getRawContentUrl(image.url)
-            }
         },
 
         // save(){
@@ -141,26 +134,18 @@ export default {
         //     })
         // },
 
-        onFileChange(event){
-            const files = event.target.files;
-            if(files && files[0]){
-                this.setImage(files[0])
-            }
-            event.target.value = ""
-        },
-
         setImage(file){
             if(!file){
-                this.image = null
+                delete this.page.image
             }else{
                 var reader = new FileReader();
-
                 reader.addEventListener('load', e=>{
                     let dataURL = e.target.result;
 
                     resizeImage(dataURL)
                     .then(dataUrl=>{
-                        this.image = {
+                        console.log(this.page)
+                        this.page.image = {
                             url: dataURL,
                             title: file.name,
                             alt: ""

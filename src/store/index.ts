@@ -21,7 +21,7 @@ window.axios = axios
 
 Vue.use(Vuex)
 
-import {IBlob, ISite, IPage, pull, site_to_git, site_from_git, push, Git} from '@/jekyll2'
+import {IBlob, ISite, Page, pull, site_to_git, site_from_git, push, Git} from '@/jekyll2'
 
 interface IUser{
   token: string | null;
@@ -39,7 +39,7 @@ interface IState{
   user: IUser;
   host: IHost;
   site: ISite;
-  page: IPage | null;
+  page: Page | null;
   origin: Git | null;
 }
 
@@ -56,19 +56,21 @@ const state: IState = {
     branch: 'master'
   },
 
-  site: {
-    drafts: Array<[string, IBlob]>(),
-    includes: Array<[string, IBlob]>(),
-    layouts: Array<[string, IBlob]>(),
-    posts: Array<IPage>(),
-    data: Array<[string, IBlob]>(),
-    sass: Array<[string, IBlob]>(),
-    pages: Array<IPage>(),
-    static_files: Array<[string, IBlob]>(),
-    ignored: Array<[string, IBlob]>(),
-    collections: Array<string>()
-  },
   page: null,
+
+  site: {
+    drafts: [],
+    includes: [],
+    layouts: [],
+    posts: [],
+    data: [],
+    sass: [],
+    pages: [],
+    static_files: [],
+    ignored: [],
+    collections: []
+  },
+  
   origin: null,
   // projects_status:'',
   // jekyll
@@ -166,7 +168,7 @@ export default new Vuex.Store({
 
 		createProject({commit, state}){
       const site:ISite = state.site
-      const project: IPage = {
+      const project = new Page({
 				title: "Untitled",
 				date: "2020-01-01",
 				id: "_projects/untitled.md",
@@ -176,8 +178,8 @@ export default new Vuex.Store({
 				name: "untitled.md",
 				path: "_projects/untitled.md",
 				content: ""
-			}
-			site.projects.splice(0, 0,project)
+			})
+			site.projects.splice(0, 0, project)
       return project.id
 		},
     
@@ -198,10 +200,17 @@ export default new Vuex.Store({
 				tags: [],
 				name: "untitled.md",
 				path: "_posts/untitled.md",
-				content: ""
+				content: "",
+        image: null
 			}
 			site.posts.splice(0, 0, post)
       return post.id
+		},
+
+    deletePost({commit, state}, post_id){
+      const site:ISite = state.site
+			const idx = site.posts.findIndex(p=>p.id===post_id)
+			site.posts.splice(idx, 1)
 		},
   }
 })

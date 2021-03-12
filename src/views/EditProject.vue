@@ -85,7 +85,19 @@ export default {
 
     computed: mapState(['site', 'page']),
 
+    watch:{
+        'page.title': function() {
+            this.update()
+        }
+    },
+
     methods:{
+        update(){
+            this.page.path = "_"+this.page.collection+"/"+slugify(this.page.title, "_").toLowerCase()+".md";
+            this.page.name = slugify(this.page.title, "_").toLowerCase()+".md";
+            this.page.id = "/"+this.page.collection+"/"+slugify(this.page.title, "_").toLowerCase()
+        },
+
         delete(){
             // remove project from site
 			this.$store.dispatch('deleteProject', this.page.id)

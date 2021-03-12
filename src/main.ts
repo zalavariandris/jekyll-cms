@@ -6,19 +6,22 @@ import YAML from 'yaml'
 import urljoin from 'url-join'
 import pathParse from 'path-parse'
 import axios from 'axios'
+import moment from 'moment'
 
 declare global {
   interface Window { 
     YAML: any;
     urljoin: urljoin,
     pathParse: any,
-    app: any
+    app: any,
+    moment: any
   }
 }
 
 window.YAML = YAML;
 window.urljoin = urljoin;
 window.pathParse = pathParse
+window.moment = moment
 
 Vue.config.productionTip = false
 

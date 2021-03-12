@@ -26,41 +26,60 @@ class Git{
     }
 }
 
-interface IPage{
-    title: string;
-    date: string;
-    id: string;
-    categories: Array<string>;
-    collection: string;
-    tags: Array<string>;
-    name: string;
-    path: string;
-    content: string;
-    [key:string]: unknown;
-};
+// interface IPage{
+//     title?: string;
+//     date?: string;
+//     id: string;
+//     categories?: Array<string>;
+//     collection?: string;
+//     tags: Array<string>;
+//     name?: string;
+//     path?: string;
+//     content?: string;
+//     [key:string]: unknown;
+// };
 
-class Page implements IPage{
+class Page{
     title: string;
     date: string;
+
+    _id?: string;
+    _name?: string;
+    _path?: string;
+    
     categories: Array<string>;
-    collection: string;
+    collection: string | undefined;
     tags: Array<string>
-    name: string;
-    path: string;
+    
+    
     content: string;
     [key:string]: unknown;
-    constructor(){
-        this.title = "";
-        this.date = "";
-        this.categories = [""];
-        this.collection = "";
-        this.tags = [""];
-        this.name= "";
-        this.path= "";
-        this.content= "";
+    constructor({title, date, categories, collection, tags, name, id, path, content}:{title?:string, date?: string, categories?:string[], collection?:string, tags: string[], name?: string, content?:string, path?:string, id?:string}){
+        this.title = title ? title : "untitled";
+        this.date = date ? date : "";
+
+        this._id = id
+        this._name= name;
+        this._path= path;
+        
+        this.categories = categories ? categories : [];
+        this.collection = collection;
+        this.tags = tags;
+        this.content = content ? content : "";
     }
 
-    get id():string{
+    get id():string | undefined{
+        if(this._id){
+            return this._id
+        }
+        return this.title
+    }
+
+    get name():string | undefined{
+        return this.title
+    }
+
+    get path():string | undefined{
         return this.title
     }
 }
@@ -426,4 +445,4 @@ function diff(git:Git, origin:Git):Change{
     return change
 }
 
-export {Git, IBlob, sha_from_content, pull, push, diff, ISite, IPage, Page, site_from_git, site_to_git, page_from_path, getRawContentUrl}
+export {Git, IBlob, sha_from_content, pull, push, diff, ISite, Page, site_from_git, site_to_git, page_from_path, getRawContentUrl}
