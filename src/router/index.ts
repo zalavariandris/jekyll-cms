@@ -2,11 +2,9 @@ import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
 import ListProjects from '@/views/ListProjects.vue'
-import NewProject from '@/views/NewProject.vue'
 import EditProject from '@/views/EditProject.vue'
 
 import ListPosts from '@/views/ListPosts.vue'
-import NewPost from '@/views/NewPost.vue'
 import EditPost from '@/views/EditPost.vue'
 
 import ListPages from '@/views/ListPages.vue'
@@ -30,11 +28,13 @@ import axios from 'axios'
 import JekyllTree from '@/views/JekyllTree.vue'
 import Jekyll from '@/jekyll'
 import * as jekyll2 from '@/jekyll2'
+import TestSHA from "@/views/TestSHA.vue"
 
 Vue.use(VueRouter)
 
 
 const routes: Array<RouteConfig> = [
+  {path: "/test", component: TestSHA},
   { path: "/login", name: "login", component: Login,},
 
   { path: "/jekyll", component: JekyllTree},
@@ -68,7 +68,6 @@ const routes: Array<RouteConfig> = [
         // }
        },
   
-      { path: 'projects/new', name: 'newProject', component: NewProject },
       { 
         path: 'projects/:id/edit', 
         name: 'editProject', 
@@ -95,7 +94,6 @@ const routes: Array<RouteConfig> = [
         //   .then(()=>next())
         // }
       },
-      { path: 'posts/new', name: 'newPost', component: NewPost   },
       { path: 'posts/:id/edit', name: 'editPost', component: EditPost,
         beforeEnter(to, from, next){
           const post_id = to.params.id
@@ -110,15 +108,18 @@ const routes: Array<RouteConfig> = [
         path: "pages", 
         name: 'listPages', 
         component: ListPages,
-        beforeEnter(to, from, next){
-          store.dispatch('loadPages')
-          .then(()=>next())
-        }
       },
       { 
         path: "pages/:id/edit", 
         name: 'editPage', 
-        component: EditPage
+        component: EditPage,
+        beforeEnter(to, from, next){
+          const page_id = to.params.id
+          const site:jekyll2.ISIte = store.state.site
+          const idx = site.pages.findIndex(p=>p.id==page_id)
+          store.state.page = site.pages[idx]
+          next()
+        }
       },
     
       { path: "dashboard", name: 'dashboard', component: Dashboard},

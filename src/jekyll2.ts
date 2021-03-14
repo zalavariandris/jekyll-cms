@@ -7,10 +7,14 @@ import pathParse from 'path-parse'
 import matter from 'gray-matter'
 import urljoin from 'url-join'
 
+import hasha from 'hasha'
+import {Base64} from 'js-base64';
+
 function sha_from_content(content){
-    const blobSize = new Blob([content]).size
-    const header = "blob "+blobSize+"\0"
-    return sha1(header+content)
+    /* content is base64 encoded content!! */
+    const str = Base64.toUint8Array(content) // decode base64 to uint8 array
+    const blob = new Blob([str])
+    return hasha([`blob ${blob.size}\0`, str], { algorithm: "sha1" })
 }
 
 interface IBlob{
@@ -290,7 +294,6 @@ async function push({owner, repo, branch, token, git, message:string="update wit
         branch
     })
 
-    debugger
     const tree = await octokit.git.createTree({
         owner,
         repo,
@@ -359,13 +362,13 @@ function site_to_git(site:ISite):Git{
 
             let md = matter.stringify(content, frontmatter)
 
-            const sha = sha_from_content(md)
             git.tree[item.path] = {
-                sha,
-                content: b64EncodeUnicode(md)
+                sha: sha_from_content( Base64.encode(md) ),
+                content: Base64.encode(md)
             }
         }
     }
+
     for(let page of site.pages){
         let {content, ...frontmatter} = page
 
@@ -379,11 +382,9 @@ function site_to_git(site:ISite):Git{
 
         // create markdown
         let md = matter.stringify(content, frontmatter)
-
-        const sha = sha_from_content(md)
         git.tree[page.path] = {
-            sha,
-            content: b64EncodeUnicode(md)
+                sha: sha_from_content( Base64.encode(md) ),
+                content: Base64.encode(md)
         }
     }
     for(let [path, blob] of site.static_files){

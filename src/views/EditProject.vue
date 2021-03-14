@@ -21,6 +21,7 @@
                 v-model="page.title"
                 label="title"
             ></v-text-field>
+            
             <v-chip>id: {{page.id}}</v-chip>
             <v-chip>path: {{page.path}}</v-chip>
 
@@ -41,15 +42,14 @@
                         v-for="fig in page.gallery"
                         :key="fig.image.url"
                         >
-                            <v-img :src="imageUrl(fig.image)" height="200px"></v-img>
+                            <img :src="getRawContentUrl(fig.image.url)" height="200px"></img>
+                            <v-card-title>{{fig.image.title}}</v-card-title>
+                            <v-card-subtitle>{{fig.image.url}}</v-card-subtitle>
                             <v-card-text>
-                                <v-textarea v-model="fig.caption" rows="1" auto-grow/>
+                                <v-textarea label="caption" v-model="fig.caption" rows="1" auto-grow/>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn
-                                    icon
-                                    @click="removeFigure(fig)"
-                                >
+                                <v-btn icon @click="removeFigure(fig)">
                                     <v-icon>mdi-delete</v-icon>
                                 </v-btn>
                             </v-card-actions>
@@ -72,21 +72,20 @@
 <script lang="js">
 import draggable from 'vuedraggable'
 import {resizeImage} from '../utils'
-import cardinput from '@/components/cardinput'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import {getRawContentUrl} from '@/jekyll2'
 import _ from 'lodash'
 import slugify from 'slugify'
+import parseDataUrl from 'parse-data-url'
 
 export default {
     name: "EditProject",
-    components: {draggable, cardinput},
+    components: {draggable},
 
-    data:function(){
-        return {}
+    computed: {
+        ...mapState(['site', 'page']),
+        ...mapGetters(['getRawContentUrl'])
     },
-
-    computed: mapState(['site', 'page']),
 
     watch:{
         'page.title': function() {
@@ -108,15 +107,6 @@ export default {
             })
         },
 
-        imageUrl(image){
-            const jekyll = this.$store.state.jekyll
-            if(image.url.startsWith("data:")){
-                return image.url
-            }else{
-                return getRawContentUrl(image.url, {owner: "zalavariandris", repo: "zalavaridesign_jekyll", branch: "master"})
-            }
-        },
-
         onFilesChange(event){
             this.addFigures(event.target.files)
             event.target.value = ""
@@ -127,13 +117,24 @@ export default {
                 for(let file of files){
                     var reader = new FileReader();
                     reader.addEventListener('load', e=>{
+                        
                         let dataURL = e.target.result
-
                         resizeImage(dataURL)
                         .then(dataURL=>{
+                            // parse data url
+                            const parsed = parseDataUrl(dataURL)
+
+                            // add image to static files
+                            this.site.static_files.push([`media/${file.name}`, {
+                                sha: sha_from_content(parsed.data),
+                                content: parsed.data
+                            }])
+
+
+                            // add image to frontmatter
                             this.page.gallery.splice(0, 0, {
                                 image: {
-                                    url: dataURL,
+                                    url: `media/${file.name}`,
                                     title: file.name.startsWith("_") ? file.name.slice(1) : file.name,
                                     alt: ""
                                 },
@@ -147,6 +148,10 @@ export default {
         },
 
         removeFigure(figure){
+            // remove image from static files
+            this.site.static_files = this.site.static_files.filter( ([p, b])=>p!=figure.image.url )
+
+            // remove image from frontmatter
             const idx = this.page.gallery.indexOf(figure)
             if(idx>=0){
                 this.page.gallery.splice(idx, 1)

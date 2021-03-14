@@ -87,7 +87,12 @@ export default new Vuex.Store({
       return site_to_git(state.site)
     },
 
-    getRawDataUrl: (state, getters)=>(path)=>{
+    getRawContentUrl: (state, getters)=>(path)=>{
+        //resolve path
+        if(path.startsWith("/")){
+          path = path.substring(1)
+        }
+
         const blob = getters.git.tree[path]
         if(!blob){
             return null
@@ -171,6 +176,7 @@ export default new Vuex.Store({
           message: "push"
         })
         .then(()=>{
+          state.origin = JSON.parse(JSON.stringify(this.getters.git)) // !!!! DEEP COPY
           resolve()
         })
         .catch(err=>{
@@ -179,29 +185,6 @@ export default new Vuex.Store({
       })
 
     },
-
-		createProject({commit, state}){
-      const site:ISite = state.site
-      const project:IPage = {
-				title: "Untitled",
-				date: "2020-01-01",
-				id: "_projects/untitled.md",
-				categories: [],
-				collection: "projects",
-				tags: [],
-				name: "untitled.md",
-				path: "_projects/untitled.md",
-				content: ""
-			}
-			site.projects.splice(0, 0, project)
-      return project.id
-		},
-    
-		deleteProject({commit, state}, project_id){
-      const site:ISite = state.site
-			const idx = site.projects.findIndex(p=>p.id===project_id)
-			site.projects.splice(idx, 1)
-		},
 
     createPost({commit, state}){
       const site:ISite = state.site
@@ -226,5 +209,29 @@ export default new Vuex.Store({
 			const idx = site.posts.findIndex(p=>p.id===post_id)
 			site.posts.splice(idx, 1)
 		},
+
+		createProject({commit, state}){
+      const site:ISite = state.site
+      const project:IPage = {
+				title: "Untitled",
+				date: "2020-01-01",
+				id: "_projects/untitled.md",
+				categories: [],
+				collection: "projects",
+				tags: [],
+				name: "untitled.md",
+				path: "_projects/untitled.md",
+				content: "",
+        gallery: []
+			}
+			site.projects.splice(0, 0, project)
+      return project.id
+		},
+    
+		deleteProject({commit, state}, project_id){
+      const site:ISite = state.site
+			const idx = site.projects.findIndex(p=>p.id===project_id)
+			site.projects.splice(idx, 1)
+		}
   }
 })
