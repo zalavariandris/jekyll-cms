@@ -3,7 +3,21 @@
         <v-container v-if="page">
             <v-toolbar flat>
                 <v-toolbar-title>Edit Project</v-toolbar-title>
+                
                 <v-spacer></v-spacer>
+
+                <v-tooltip bottom show>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-chip 
+                            v-bind="attrs"
+                            v-on="on"
+                        >
+                        md
+                        </v-chip>
+                    </template>
+                    <span>{{md[0]}}</span>
+                    <pre style="white-space: pre-wrap">{{md[1]}}</pre>
+                </v-tooltip>
 
                 <v-btn
                     color="error"
@@ -73,10 +87,11 @@
 import draggable from 'vuedraggable'
 import {resizeImage} from '../utils'
 import { mapState, mapGetters } from 'vuex'
-import {getRawContentUrl} from '@/jekyll2'
+import {getRawContentUrl, page_to_blob} from '@/jekyll2'
 import _ from 'lodash'
 import slugify from 'slugify'
 import parseDataUrl from 'parse-data-url'
+import {Base64} from 'js-base64';
 
 export default {
     name: "EditProject",
@@ -84,7 +99,11 @@ export default {
 
     computed: {
         ...mapState(['site', 'page']),
-        ...mapGetters(['getRawContentUrl'])
+        ...mapGetters(['getRawContentUrl']),
+        md(){
+            const [path, blob] = page_to_blob(this.page)
+            return [path, Base64.decode(blob.content)]
+        }
     },
 
     watch:{

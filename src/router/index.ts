@@ -115,7 +115,7 @@ const routes: Array<RouteConfig> = [
         component: EditPage,
         beforeEnter(to, from, next){
           const page_id = to.params.id
-          const site:jekyll2.ISIte = store.state.site
+          const site:jekyll2.ISite = store.state.site
           const idx = site.pages.findIndex(p=>p.id==page_id)
           store.state.page = site.pages[idx]
           next()
