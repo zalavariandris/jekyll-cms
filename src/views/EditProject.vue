@@ -35,9 +35,6 @@
                 v-model="page.title"
                 label="title"
             ></v-text-field>
-            
-            <v-chip>id: {{page.id}}</v-chip>
-            <v-chip>path: {{page.path}}</v-chip>
 
             <v-container>
                 <v-row>

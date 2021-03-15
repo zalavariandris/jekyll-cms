@@ -1,19 +1,27 @@
 <template>
     <v-container>
-        
-        STATIC FILES
-        <div class="grid">
-        <v-card v-for="[path, blob] in site.static_files" :key="path" width="10rem">
-            <div v-if="isImage(path)">
-                <v-img :src="getRawDataUrl(path)"></v-img>
-            </div>
-            <v-card-text>
-                {{blob.sha}}<br>
-                {{sha_from_content(blob.content)}}
-                <v-chip>{{path}}</v-chip>
-            </v-card-text>
-        </v-card>
-        </div>
+        <v-toolbar flat>
+            <v-toolbar-title>Static Files</v-toolbar-title>
+        </v-toolbar>
+        <v-item-group class="grid">
+            <v-item v-for="[path, blob] in site.static_files" 
+                    :key="path" >
+                <v-card 
+                   
+                    width="10rem"
+                    height="14rem"
+                >
+                    <v-img 
+                    v-if="isImage(path)" 
+                    :src="getRawContentUrl(path)"
+                    height="10rem"
+                    ></v-img>
+                    <v-card-text style="overflow: hidden;">
+                        {{filename(path)}}
+                    </v-card-text>
+                </v-card>
+            </v-item>
+        </v-item-group>
     </v-container>
 </template>
 
@@ -29,11 +37,12 @@
 import mime from 'mime-types'
 import { mapState, mapGetters } from 'vuex'
 import {sha_from_content} from "@/jekyll2"
+import pathParse from 'path-parse'
 
 export default {
     computed: {
         ...mapState(['site']),
-        ...mapGetters(['getRawDataUrl'])
+        ...mapGetters(['getRawContentUrl'])
     },
     methods:{
         isImage: (path)=>{
@@ -45,9 +54,13 @@ export default {
 
         sha_from_content(data){
             return sha_from_content(data)
+        },
+
+        filename(path){
+            const {base, name, dir} = pathParse(path)
+            return base
         }
 
     }
-    
 }
 </script>
