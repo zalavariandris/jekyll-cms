@@ -4,19 +4,6 @@
             <v-toolbar-title>Edit Post</v-toolbar-title>
             <v-spacer></v-spacer>
 
-            <v-tooltip bottom show>
-                <template v-slot:activator="{ on, attrs }">
-                    <v-chip 
-                        v-bind="attrs"
-                        v-on="on"
-                    >
-                    md
-                    </v-chip>
-                </template>
-                <span>{{md[0]}}</span>
-                <pre style="white-space: pre-wrap">{{md[1]}}</pre>
-            </v-tooltip>
-
             <v-btn
                 color="error"
                 outlined
@@ -27,6 +14,7 @@
                 </v-icon>
                 delete
             </v-btn>
+
         </v-toolbar>
 
         <v-text-field
@@ -38,6 +26,7 @@
             v-model="page.date"
             label="date"
         ></v-text-field>
+        
         <v-chip>id: {{page.id}}</v-chip>
         <v-chip>path: {{page.path}}</v-chip>
 
@@ -82,19 +71,14 @@ import moment from 'moment'
 import {resizeImage} from '../utils'
 import { mapState, mapGetters } from 'vuex'
 import slugify from 'slugify'
-import {sha_from_content, page_to_blob} from '@/jekyll2'
+import {sha_from_content} from '@/jekyll2'
 import parseDataUrl from 'parse-data-url'
-import {Base64} from 'js-base64';
 
 export default {
     name: "EditPost",
     computed: {
         ...mapState(['site', 'page']),
-        ...mapGetters(['getRawContentUrl']),
-        md(){
-            const [path, blob] = page_to_blob(this.page)
-            return [path, Base64.decode(blob.content)]
-        }
+        ...mapGetters(['getRawContentUrl'])
     },
 
     watch:{

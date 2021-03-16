@@ -1,83 +1,90 @@
 <template>
-    <v-form @submit.prevent="save">
-        <v-container v-if="page">
-            <v-toolbar flat>
-                <v-toolbar-title>Edit Project</v-toolbar-title>
-                
-                <v-spacer></v-spacer>
+    <v-row>
+        <v-col cols="4">
+            <v-form @submit.prevent="save">
+                <v-container v-if="page">
+                    <v-toolbar flat>
+                        <v-toolbar-title>Edit Project</v-toolbar-title>
+                        
+                        <v-spacer></v-spacer>
 
-                <v-tooltip bottom show>
-                    <template v-slot:activator="{ on, attrs }">
-                        <v-chip 
-                            v-bind="attrs"
-                            v-on="on"
+                        <v-tooltip bottom show>
+                            <template v-slot:activator="{ on, attrs }">
+                                <v-chip 
+                                    v-bind="attrs"
+                                    v-on="on"
+                                >
+                                md
+                                </v-chip>
+                            </template>
+                            <span>{{md[0]}}</span>
+                            <pre style="white-space: pre-wrap">{{md[1]}}</pre>
+                        </v-tooltip>
+
+                        <v-btn
+                            color="error"
+                            outlined
+                            @click="this.delete"
                         >
-                        md
-                        </v-chip>
-                    </template>
-                    <span>{{md[0]}}</span>
-                    <pre style="white-space: pre-wrap">{{md[1]}}</pre>
-                </v-tooltip>
+                            <v-icon left>
+                                mdi-delete
+                            </v-icon>
+                            delete
+                        </v-btn>
+                    </v-toolbar>
 
-                <v-btn
-                    color="error"
-                    outlined
-                    @click="this.delete"
-                >
-                    <v-icon left>
-                        mdi-delete
-                    </v-icon>
-                    delete
-                </v-btn>
-            </v-toolbar>
+                    <v-text-field
+                        v-model="page.title"
+                        label="title"
+                    ></v-text-field>
 
-            <v-text-field
-                v-model="page.title"
-                label="title"
-            ></v-text-field>
+                    <v-container>
+                        <v-row>
+                            <v-file-input
+                                multiple
+                                hide-input
+                                label="image"
+                                @change="addFigures"
+                            ></v-file-input>
+                        </v-row>
+                        <v-row>
+                            <draggable v-model="page.gallery" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                                <v-card
+                                outlined
+                                style="width: 10rem;"
+                                v-for="fig in page.gallery"
+                                :key="fig.image.url"
+                                >
+                                    <img :src="getRawContentUrl(fig.image.url)" height="200px"></img>
+                                    <v-card-title>{{fig.image.title}}</v-card-title>
+                                    <v-card-subtitle>{{fig.image.url}}</v-card-subtitle>
+                                    <v-card-text>
+                                        <v-textarea label="caption" v-model="fig.caption" rows="1" auto-grow/>
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-btn icon @click="removeFigure(fig)">
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </draggable>
+                        </v-row>
+                    </v-container>
 
-            <v-container>
-                <v-row>
-                    <v-file-input
-                        multiple
-                        hide-input
-                        label="image"
-                        @change="addFigures"
-                    ></v-file-input>
-                </v-row>
-                <v-row>
-                    <draggable v-model="page.gallery" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-                        <v-card
-                        outlined
-                        style="width: 10rem;"
-                        v-for="fig in page.gallery"
-                        :key="fig.image.url"
-                        >
-                            <img :src="getRawContentUrl(fig.image.url)" height="200px"></img>
-                            <v-card-title>{{fig.image.title}}</v-card-title>
-                            <v-card-subtitle>{{fig.image.url}}</v-card-subtitle>
-                            <v-card-text>
-                                <v-textarea label="caption" v-model="fig.caption" rows="1" auto-grow/>
-                            </v-card-text>
-                            <v-card-actions>
-                                <v-btn icon @click="removeFigure(fig)">
-                                    <v-icon>mdi-delete</v-icon>
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </draggable>
-                </v-row>
-            </v-container>
+                    <v-textarea
+                        v-model="page.content"
+                        auto-grow
+                        rows="2"
+                        label="content"
+                    ></v-textarea>
 
-            <v-textarea
-                v-model="page.content"
-                auto-grow
-                rows="2"
-                label="content"
-            ></v-textarea>
-
-        </v-container>
-    </v-form>
+                </v-container>
+            </v-form>
+        </v-col>
+        <v-col cols="4">
+            <LiquidPreview :template="md[1]" :data="{site, page}"></LiquidPreview>
+        </v-col>
+    </v-row>
 </template>
 
 <script lang="js">
@@ -89,17 +96,24 @@ import _ from 'lodash'
 import slugify from 'slugify'
 import parseDataUrl from 'parse-data-url'
 import {Base64} from 'js-base64';
+import LiquidPreview from "@/components/LiquidPreview.vue"
 
 export default {
     name: "EditProject",
-    components: {draggable},
+    components: {draggable, LiquidPreview},
 
     computed: {
         ...mapState(['site', 'page']),
         ...mapGetters(['getRawContentUrl']),
         md(){
+            this.page.layout = "layout.html"
             const [path, blob] = page_to_blob(this.page)
             return [path, Base64.decode(blob.content)]
+        },
+        test_markdown(){
+            const md = this.md[1]
+            debugger
+            return "{{page.title}}"
         }
     },
 
